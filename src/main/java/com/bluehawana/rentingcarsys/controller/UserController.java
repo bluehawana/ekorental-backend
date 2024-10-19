@@ -1,5 +1,6 @@
 package com.bluehawana.rentingcarsys.controller;
 
+import com.bluehawana.rentingcarsys.model.Role;
 import com.bluehawana.rentingcarsys.model.User;
 import com.bluehawana.rentingcarsys.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,31 +15,15 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        return ResponseEntity.ok(userService.createUser(user));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
-    }
-
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        user.setId(id);
-        return ResponseEntity.ok(userService.updateUser(user));
+    @GetMapping("/role")
+    public ResponseEntity<Role> getUserRole(@RequestParam String email) {
+        Role role = userService.getUserRole(email);
+        return ResponseEntity.ok(role);
     }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.ok().build();
-    }
-
 }

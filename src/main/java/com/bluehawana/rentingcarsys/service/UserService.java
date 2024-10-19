@@ -1,18 +1,26 @@
 package com.bluehawana.rentingcarsys.service;
 
+import com.bluehawana.rentingcarsys.model.Role;
 import com.bluehawana.rentingcarsys.model.User;
+import com.bluehawana.rentingcarsys.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.List;
 
-public interface UserService {
-  org.apache.catalina.User createUser(org.apache.catalina.User user);
+public class UserService {
+    @Autowired
+    private UserRepository userRepository;
 
-  User createUser(User user);
-        User getUserById(Long id);
-        List < User > getAllUsers();
-        User updateUser(User user);
-        void deleteUser(Long id);
-        User findByEmail(String email);
+    public Role getUserRole(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getRole)
+                .orElse(Role.USER);
+    }
 
-    void createOrUpdateUser(String userName, String email);
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 }
+
+
 
