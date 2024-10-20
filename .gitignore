@@ -33,5 +33,5 @@ build/
 .vscode/
 
 # neglect application.properties file
-application.properties
+src/main/resources/application.properties
 ```
