@@ -12,26 +12,30 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cars")
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class CarController {
     @Autowired
     private CarService carService;
 
     private static final Logger logger = LoggerFactory.getLogger(CarController.class);
 
-    @PostMapping
-    public ResponseEntity<Car> createCar(@RequestBody Car car) {
-        return ResponseEntity.ok(carService.createCar(car));
+    // Get all cars - public access
+    @GetMapping
+    public ResponseEntity<List<Car>> getAllCars() {
+        logger.debug("getAllCars method called");
+        return ResponseEntity.ok(carService.getAllCars());
     }
 
+    // Get single car - public access
     @GetMapping("/{id}")
     public ResponseEntity<Car> getCar(@PathVariable Long id) {
         return ResponseEntity.ok(carService.getCarById(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<Car>> getAllCars() {
-        logger.debug("getAllCars method called");
-        return ResponseEntity.ok(carService.getAllCars());
+    // Admin only endpoints
+    @PostMapping
+    public ResponseEntity<Car> createCar(@RequestBody Car car) {
+        return ResponseEntity.ok(carService.createCar(car));
     }
 
     @PutMapping("/{id}")

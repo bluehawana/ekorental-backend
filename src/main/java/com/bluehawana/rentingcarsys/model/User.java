@@ -1,9 +1,16 @@
 package com.bluehawana.rentingcarsys.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
+@Data
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,31 +19,43 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Booking> bookings = new ArrayList<>();
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Setter
+    @Column(unique = true, nullable = false)
+    private String username;
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 
     public Role getRole() {
-        return role;
+        if (email.equals("bluehawana@gmail.com"))
+            return Role.ADMIN;
+        else
+            return Role.USER;
+    }
+
+    public void addBooking(Booking booking) {
+        bookings.add(booking);
+        booking.setUser(this);
     }
 
     public void setRole(Role role) {
-        this.role = role;
+        if (role == Role.ADMIN) {
+            email = "bluehawana@gmail.com";
+    }
+        else { role = Role.USER;
+        }
+    }
+
+    public void setName(String name) {
+        this.username = name;
     }
 }
+

@@ -2,6 +2,9 @@ package com.bluehawana.rentingcarsys.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Entity
 public class Car {
     @Id
@@ -69,8 +72,8 @@ public class Car {
         this.year = year;
     }
 
-    public double getPricePerHour() {
-        return pricePerHour;
+    public BigDecimal getPricePerHour() {
+        return BigDecimal.valueOf(pricePerHour);
     }
 
     public void setPricePerHour(double pricePerHour) {
@@ -100,4 +103,19 @@ public class Car {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+
+        private LocalDateTime createdAt;
+
+public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
 }
+
+public LocalDateTime getCreatedAt() {
+    return createdAt;
+}
+
+    public void setUpdatedAt(LocalDateTime now) {
+        this.createdAt = now;
+    }
+}
+
