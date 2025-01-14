@@ -1,7 +1,8 @@
 package com.bluehawana.rentingcarsys.service;
 
-import com.bluehawana.rentingcarsys.model.Role;
+import com.bluehawana.rentingcarsys.dto.UserDTO;
 import com.bluehawana.rentingcarsys.model.User;
+import com.bluehawana.rentingcarsys.model.UserRole;
 import com.bluehawana.rentingcarsys.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,13 +12,14 @@ import java.util.Optional;
 
 @Service
 public class UserService {
+
     @Autowired
     private UserRepository userRepository;
 
-    public Role getUserRole(String email) {
+    public UserRole getUserRole(String email) {
         return userRepository.findByEmail(email)
                 .map(User::getRole)
-                .orElse(Role.USER);
+                .orElse(UserRole.USER);
     }
 
     public List<User> getAllUsers() {
@@ -34,7 +36,7 @@ public class UserService {
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setUsername(username);
-                    newUser.setRole(Role.USER);
+                    newUser.setRole(UserRole.USER);
                     userRepository.save(newUser);
                 }
         );
@@ -62,6 +64,26 @@ public class UserService {
         user.setEmail(email);
 
         return userRepository.save(user);
+    }
+
+    public User createOrUpdateUser(UserDTO userDTO) {
+        User existingUser = userRepository.findByEmail(userDTO.getEmail())
+            .orElse(new User());
+
+        existingUser.setEmail(userDTO.getEmail());
+        existingUser.setName(userDTO.getName());
+        existingUser.setProvider(userDTO.getProvider());
+        existingUser.setProviderId(userDTO.getProviderId());
+
+        return userRepository.save(existingUser);
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    public void deleteUserById(Long id) {
+        userRepository.deleteById(id);
     }
 }
 

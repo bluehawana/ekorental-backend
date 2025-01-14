@@ -1,121 +1,62 @@
 package com.bluehawana.rentingcarsys.model;
 
 import jakarta.persistence.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Entity
+@Table(name = "cars")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Car {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String make;
+    @Column(nullable = false)
     private String model;
-    private int year;
 
-    @Column(name = "price_per_hour") // Adjust column name for better readability
-    private double pricePerHour; // Change variable name to camelCase for consistency
+    @Column(nullable = false, unique = true)
+    private String licensePlate;
 
-    @Column(name = "license_plate") // Adjust column name for better readability
-    private String licensePlate; // Change variable name to camelCase for consistency
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal hourRate;
 
-    private String color;
+    private String imageUrl;
 
-    private String imageUrl; // Add imageUrl field
+    @Column(nullable = false)
+    private Boolean isAvailable = true;
 
-    // Default constructor
-    public Car() {
+    @Column(nullable = false)
+    private String location;
+
+    private Integer year;
+
+    @Column(length = 500)
+    private String description;
+
+    public Optional<Car> map(Object o) {
+        return Optional.empty();
     }
 
-    // Constructor with parameters
-    public Car(String make, String model, int year, double pricePerHour, String licensePlate, String color) {
-        this.make = make;
-        this.model = model;
-        this.year = year;
-        this.pricePerHour = pricePerHour;
-        this.licensePlate = licensePlate;
-        this.color = color;
+    public Object isAvailable() {
+        if (isAvailable) {
+            return true;
+        }
+        return false;
     }
 
-    // Getters and setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getMake() {
-        return make;
-    }
-
-    public void setMake(String make) {
-        this.make = make;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
-
-    public BigDecimal getPricePerHour() {
-        return BigDecimal.valueOf(pricePerHour);
-    }
-
-    public void setPricePerHour(double pricePerHour) {
-        this.pricePerHour = pricePerHour;
-    }
-
-    public String getLicensePlate() {
-        return licensePlate;
-    }
-
-    public void setLicensePlate(String licensePlate) {
-        this.licensePlate = licensePlate;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-        private LocalDateTime createdAt;
-
-public void setCreatedAt(LocalDateTime createdAt) {
-    this.createdAt = createdAt;
-}
-
-public LocalDateTime getCreatedAt() {
-    return createdAt;
-}
-
-    public void setUpdatedAt(LocalDateTime now) {
-        this.createdAt = now;
+    public void setAvailable(Object available) {
+        if (available.equals(true)) {
+            isAvailable = true;
+        } else {
+            isAvailable = false;
+        }
     }
 }
-

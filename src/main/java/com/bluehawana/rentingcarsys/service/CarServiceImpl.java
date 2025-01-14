@@ -65,9 +65,9 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public Car getCarByLicensePlate(String licensePlate) {
+    public Optional<Car> getCarByLicensePlate(String licensePlate) {
         logger.info("Fetching car with license plate: {}", licensePlate);
-        Car car = carRepository.findByLicensePlate(licensePlate);
+        Optional<Car> car = carRepository.findByLicensePlate(licensePlate);
         if (car != null) {
             logger.info("Found car: {}", car);
         } else {

@@ -1,80 +1,56 @@
 package com.bluehawana.rentingcarsys.controller;
 
-import com.bluehawana.rentingcarsys.dto.BookingRequestDTO;
-import com.bluehawana.rentingcarsys.dto.CustomErrorResponse;
-import com.bluehawana.rentingcarsys.model.Booking;
+import com.bluehawana.rentingcarsys.dto.BookingRequest;
+import com.bluehawana.rentingcarsys.model.*;
+import com.bluehawana.rentingcarsys.repository.CarRepository;
+import com.bluehawana.rentingcarsys.repository.UserRepository;
 import com.bluehawana.rentingcarsys.service.BookingService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-@Slf4j
 @RestController
-@RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@RequestMapping("/api/bookings")
+@CrossOrigin(origins = "http://localhost:3000")
 public class BookingController {
 
+    private final BookingService bookingService;
+    private final CarRepository carRepository;
+    private final UserRepository userRepository;
+
     @Autowired
-    private BookingService bookingService;
+    public BookingController(BookingService bookingService,
+                             CarRepository carRepository,
+                             UserRepository userRepository) {
+        this.bookingService = bookingService;
+        this.carRepository = carRepository;
+        this.userRepository = userRepository;
+    }
 
-    // Create booking
-    @PostMapping("/cars/{carId}/book")
-    public ResponseEntity<?> createBooking(
-            @PathVariable Long carId,
-            @RequestBody BookingRequestDTO request) {
+    @PostMapping
+    public ResponseEntity<Booking> createBooking(@RequestBody BookingRequest request) {
         try {
-            Booking booking = bookingService.createBooking(
-                    carId,
-                    request.getStartTime(),
-                    request.getEndTime(),
-                    request.getTotalHours(),
-                    request.getTotalPrice(),
-                    (String) request.getUserEmail(),
-                    request.getUserName(),
-                    request.getStatus()
-            );
-            return ResponseEntity.ok(booking);
+            // Find car and user
+            Car car = carRepository.findById(request.getCarId())
+                    .orElseThrow(() -> new RuntimeException("Car not found"));
+
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Create booking
+            Booking booking = Booking.builder()
+                    .car(car)
+                    .user(user)
+                    .startDate(request.getStartDate())
+                    .endDate(request.getEndDate())
+                    .totalPrice(request.getTotalPrice())
+                    .status(BookingStatus.PENDING)
+                    .build();
+
+            Booking savedBooking = bookingService.createBooking(booking);
+            return ResponseEntity.ok(savedBooking);
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new CustomErrorResponse(e.getMessage()));
+            return ResponseEntity.badRequest().build();
         }
-    }
-
-    // Get all bookings for a car
-    @GetMapping("/cars/{carId}/bookings")
-    public ResponseEntity<List<Booking>> getBookingsForCar(@PathVariable Long carId) {
-        List<Booking> bookings = bookingService.getBookingsByCar_Id(carId);
-        return ResponseEntity.ok(bookings);
-    }
-
-    // Get booking by ID
-    @GetMapping("/bookings/{id}")
-    public ResponseEntity<Booking> getBooking(@PathVariable Long id) {
-        return ResponseEntity.ok(bookingService.getBookingById(id));
-    }
-
-    // Get user's bookings
-    @GetMapping("/bookings/user/{email}")
-    public ResponseEntity<List<Booking>> getUserBookings(@PathVariable String email) {
-        List<Booking> bookings = bookingService.getBookingsByUserEmail(email);
-        return ResponseEntity.ok(bookings);
-    }
-
-    // Update booking status
-    @PutMapping("/bookings/{id}/status")
-    public ResponseEntity<Booking> updateBookingStatus(
-            @PathVariable Long id,
-            @RequestBody String status) {
-        return ResponseEntity.ok(bookingService.updateBookingStatus(id, status));
-    }
-
-    // Delete booking
-    @DeleteMapping("/bookings/{id}")
-    public ResponseEntity<Void> deleteBooking(@PathVariable Long id) {
-        bookingService.deleteBooking(id);
-        return ResponseEntity.ok().build();
     }
 }

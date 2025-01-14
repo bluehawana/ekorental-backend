@@ -15,16 +15,17 @@ public class BookingRequestDTO {
     @Getter
     private Object userEmail;
 
-    public int getTotalHours() {
-        return (int) java.time.Duration.between(startTime, endTime).toHours();
+    public long getTotalHours() {
+        return java.time.Duration.between(startTime, endTime).toHours();
     }
 
     public String getUserName() {
         return "User";
     }
 
-    public String getStatus() {
-        return BookingStatus.PENDING.name();
+    public BookingStatus getStatus() {
+        return BookingStatus.PENDING;
+
     }
 }
 
