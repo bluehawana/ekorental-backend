@@ -9,11 +9,13 @@ import java.math.BigDecimal;
 
 @Data
 public class BookingRequestDTO {
+    private Long carId;
+    private Long userId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private BigDecimal totalPrice;
     @Getter
-    private Object userEmail;
+    private Object userEyanyanmail;
 
     public long getTotalHours() {
         return java.time.Duration.between(startTime, endTime).toHours();
