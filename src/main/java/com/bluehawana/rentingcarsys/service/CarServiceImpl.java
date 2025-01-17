@@ -1,78 +1,73 @@
 package com.bluehawana.rentingcarsys.service;
 
+import com.bluehawana.rentingcarsys.model.Booking;
 import com.bluehawana.rentingcarsys.model.Car;
 import com.bluehawana.rentingcarsys.repository.CarRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.bluehawana.rentingcarsys.repository.BookingRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
-    private static final Logger logger = LoggerFactory.getLogger(CarServiceImpl.class);
-
-    @Autowired
-    private CarRepository carRepository;
+    private final CarRepository carRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
+    @Transactional
     public Car createCar(Car car) {
-        logger.info("Creating new car: {}", car);
-        if (car == null) {
-            logger.error("Attempted to create null car");
-            throw new IllegalArgumentException("Car cannot be null");
-        }
         return carRepository.save(car);
     }
 
     @Override
     public Car getCarById(Long id) {
-        logger.info("Fetching car with id: {}", id);
-        Optional<Car> carOptional = carRepository.findById(id);
-        if (carOptional.isPresent()) {
-            logger.info("Found car: {}", carOptional.get());
-            return carOptional.get();
-        } else {
-            logger.warn("Car with id {} not found", id);
-            return null;
-        }
+        return carRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Car not found with id: " + id));
+    }
+
+    @Override
+    public Optional<Car> getCarByLicensePlate(String licensePlate) {
+        return carRepository.findByLicensePlate(licensePlate);
     }
 
     @Override
     public List<Car> getAllCars() {
-        logger.info("Fetching all cars");
-        List<Car> cars = carRepository.findAll();
-        logger.info("Found {} cars", cars.size());
-        return cars;
+        return carRepository.findAll();
     }
 
     @Override
+    @Transactional
     public Car updateCar(Car car) {
-        logger.info("Updating car: {}", car);
-        if (car == null || car.getId() == null) {
-            logger.error("Attempted to update null car or car without id");
-            throw new IllegalArgumentException("Car cannot be null and must have an id");
+        if (!carRepository.existsById(car.getId())) {
+            throw new RuntimeException("Car not found with id: " + car.getId());
         }
         return carRepository.save(car);
     }
 
     @Override
+    @Transactional
     public void deleteCar(Long id) {
-        logger.info("Deleting car with id: {}", id);
+        if (!carRepository.existsById(id)) {
+            throw new RuntimeException("Car not found with id: " + id);
+        }
         carRepository.deleteById(id);
     }
 
     @Override
-    public Optional<Car> getCarByLicensePlate(String licensePlate) {
-        logger.info("Fetching car with license plate: {}", licensePlate);
-        Optional<Car> car = carRepository.findByLicensePlate(licensePlate);
-        if (car != null) {
-            logger.info("Found car: {}", car);
-        } else {
-            logger.warn("Car with license plate {} not found", licensePlate);
+    public boolean isCarAvailable(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        // Verify car exists
+        if (!carRepository.existsById(carId)) {
+            throw new RuntimeException("Car not found with id: " + carId);
         }
-        return car;
+
+        // Check for overlapping bookings
+        List<Booking> overlappingBookings = bookingRepository.findOverlappingBookings(
+                carId, startTime, endTime);
+        return overlappingBookings.isEmpty();
     }
 }

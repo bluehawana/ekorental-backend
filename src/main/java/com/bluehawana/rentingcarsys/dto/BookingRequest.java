@@ -4,26 +4,31 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class BookingRequest {
-    private String carLicensePlate;
-    private String userEmail;
+    private Long userId;
+    private Long carId;
     private String startTime;
     private String endTime;
-    private Object carId;
+    private BigDecimal totalPrice;
 
-    public String getCarLicensePlate() {
-        return carLicensePlate;
+    public BookingRequest(Long carId, Long userId) {
+        this.carId = carId;
+        this.userId = userId;
     }
 
-    public void setCarLicensePlate(String carLicensePlate) {
-        this.carLicensePlate = carLicensePlate;
+    public Long getUserId() {
+        return userId;
     }
 
-    public String getUserEmail() {
-        return userEmail;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public Long getCarId() {
+        return carId;
+    }
+
+    public void setCarId(Long carId) {
+        this.carId = carId;
     }
 
     public String getStartTime() {
@@ -42,12 +47,12 @@ public class BookingRequest {
         this.endTime = endTime;
     }
 
-    public Long getCarId() {
-        return (Long) carId;
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
     }
 
-    public Long getUserId() {
-        return 1L;
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
     }
 
     public LocalDateTime getStartDate() {
@@ -56,9 +61,5 @@ public class BookingRequest {
 
     public LocalDateTime getEndDate() {
         return LocalDateTime.parse(endTime);
-    }
-
-    public BigDecimal getTotalPrice() {
-        return BigDecimal.valueOf(100);
     }
 }

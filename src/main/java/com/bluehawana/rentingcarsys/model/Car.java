@@ -41,6 +41,10 @@ public class Car {
     @Column(length = 500)
     private String description;
 
+    public Car(Long carId) {
+        this.id = carId;
+    }
+
     public Optional<Car> map(Object o) {
         return Optional.empty();
     }

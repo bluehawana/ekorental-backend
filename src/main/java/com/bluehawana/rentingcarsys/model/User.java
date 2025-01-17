@@ -35,6 +35,10 @@ public class User {
     private UserRole role = UserRole.USER;
     private String providerId;
 
+    public User(Long userId) {
+        this.id = userId;
+    }
+
     public void setUsername(String username) {
         this.name = username;
     }

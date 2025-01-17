@@ -33,8 +33,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",  // Next.js development server
-                "http://localhost:8085",  // Alternative local development
-                "http://localhost:8085/upload"  // Allow access to car photos
+                "http://localhost:8080",  // Alternative local development
+                "http://localhost:8080/upload"  // Allow access to car photos
         ));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"

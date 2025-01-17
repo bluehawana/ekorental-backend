@@ -1,6 +1,7 @@
 package com.bluehawana.rentingcarsys.dto;
 
 import com.bluehawana.rentingcarsys.model.AuthProvider;
+import com.bluehawana.rentingcarsys.model.UserRole;
 
 public class UserDTO {
     private Long id;
@@ -24,6 +25,9 @@ public class UserDTO {
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.role = role;
+    }
+
+    public UserDTO(Long id, String name, String email, String avatarUrl, String string, String string1) {
     }
 
     public Long getId() {
@@ -54,8 +58,8 @@ public class UserDTO {
         return address;
     }
 
-    public String getRole() {
-        return role;
+    public UserRole getRole() {
+        return UserRole.valueOf(role.toUpperCase());
     }
 
     public String getName() {
@@ -68,5 +72,9 @@ public class UserDTO {
 
     public Object getProviderId() {
         return "providerId";
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

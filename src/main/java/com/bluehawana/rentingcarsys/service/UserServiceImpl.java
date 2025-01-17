@@ -13,6 +13,10 @@ public class UserServiceImpl extends UserService {
     @Autowired
     private UserRepository userRepository;
 
+    public UserServiceImpl(UserRepository userRepository) {
+        super(userRepository);
+    }
+
     @Override
     public UserRole getUserRole(String email) {
         return userRepository.findByEmail(email)

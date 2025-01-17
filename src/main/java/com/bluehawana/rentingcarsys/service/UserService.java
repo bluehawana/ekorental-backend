@@ -1,81 +1,39 @@
+// In UserService.java
 package com.bluehawana.rentingcarsys.service;
 
+import com.bluehawana.rentingcarsys.dto.OAuthUserDTO;
 import com.bluehawana.rentingcarsys.dto.UserDTO;
+import com.bluehawana.rentingcarsys.model.AuthProvider;
 import com.bluehawana.rentingcarsys.model.User;
 import com.bluehawana.rentingcarsys.model.UserRole;
 import com.bluehawana.rentingcarsys.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserService {
+@RequiredArgsConstructor
+public abstract class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    public UserRole getUserRole(String email) {
-        return userRepository.findByEmail(email)
-                .map(User::getRole)
-                .orElse(UserRole.USER);
-    }
+    private final UserRepository userRepository;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    public void handleLogin(String email, String username) {
-        userRepository.findByEmail(email).ifPresentOrElse(
-                user -> {
-                    // User exists, do nothing
-                },
-                () -> {
-                    // User does not exist, create new user
-                    User newUser = new User();
-                    newUser.setEmail(email);
-                    newUser.setUsername(username);
-                    newUser.setRole(UserRole.USER);
-                    userRepository.save(newUser);
-                }
-        );
-    }
-
-    public User createOrUpdateUserFromGoogle(String email) {
-        return createOrUpdateUser(email, email);
-    }
-
-    public User createOrUpdateUserFromGitHub(String email, String username) {
-        return createOrUpdateUser(email, username);
-    }
-
-    private User createOrUpdateUser(String email, String username) {
-        Optional<User> existingUser = userRepository.findByEmail(email);
-
-        User user;
-        if (existingUser.isPresent()) {
-            user = existingUser.get();
-        } else {
-            user = new User();
-        }
-
-        user.setUsername(username);
-        user.setEmail(email);
-
-        return userRepository.save(user);
+    public UserRole getUserRole(String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+        return user.isPresent() ? user.get().getRole() : null;
     }
 
     public User createOrUpdateUser(UserDTO userDTO) {
-        User existingUser = userRepository.findByEmail(userDTO.getEmail())
-            .orElse(new User());
-
-        existingUser.setEmail(userDTO.getEmail());
-        existingUser.setName(userDTO.getName());
-        existingUser.setProvider(userDTO.getProvider());
-        existingUser.setProviderId(userDTO.getProviderId());
-
-        return userRepository.save(existingUser);
+        User user = userRepository.findById(userDTO.getId()).orElse(new User());
+        user.setName(userDTO.getName());
+        user.setEmail(userDTO.getEmail());
+        user.setRole(userDTO.getRole());
+        return userRepository.save(user);
     }
 
     public User getUserById(Long id) {
@@ -85,7 +43,18 @@ public class UserService {
     public void deleteUserById(Long id) {
         userRepository.deleteById(id);
     }
+
+    public User createOrUpdateOAuthUser(OAuthUserDTO oAuthUserDTO) {
+        User user = userRepository.findByEmail(oAuthUserDTO.getEmail()).orElse(new User());
+        user.setName(oAuthUserDTO.getName());
+        user.setEmail(oAuthUserDTO.getEmail());
+        user.setProvider(AuthProvider.valueOf(oAuthUserDTO.getProvider()));
+        user.setAvatarUrl(oAuthUserDTO.getAvatarUrl());
+        user.setRole(UserRole.valueOf(oAuthUserDTO.getRole().toUpperCase()));
+        return userRepository.save(user);
+    }
+
+    public abstract User createOrUpdateUserFromGoogle(String email);
+
+    public abstract User createOrUpdateUserFromGitHub(String email, String username);
 }
-
-
-

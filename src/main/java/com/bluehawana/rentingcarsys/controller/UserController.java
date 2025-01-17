@@ -1,50 +1,75 @@
+// src/main/java/com/bluehawana/rentingcarsys/controller/UserController.java
+
 package com.bluehawana.rentingcarsys.controller;
 
+import com.bluehawana.rentingcarsys.dto.OAuthUserDTO;
 import com.bluehawana.rentingcarsys.dto.UserDTO;
 import com.bluehawana.rentingcarsys.model.User;
-import com.bluehawana.rentingcarsys.model.UserRole;
 import com.bluehawana.rentingcarsys.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:3000")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final Logger logger = LoggerFactory.getLogger(UserController.class);
+
+    @PostMapping("/oauth")
+    public ResponseEntity<?> handleOAuthUser(@RequestBody OAuthUserDTO request) {
+        try {
+            logger.info("Received OAuth request: {}", request);
+            User user = userService.createOrUpdateOAuthUser(request);
+            logger.info("Created/Updated user: {}", user);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            logger.error("Error handling OAuth user", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
-    }
-
-    @GetMapping("/role")
-    public ResponseEntity<UserRole> getUserRole(@RequestParam String email) {
-        UserRole role = userService.getUserRole(email);
-        return ResponseEntity.ok(role);
-    }
-
-    @PostMapping
-    public ResponseEntity<User> createOrUpdateUser(@RequestBody UserDTO userDTO) {
-        User user = userService.createOrUpdateUser(userDTO);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
-        return ResponseEntity.ok(user);
+        if (user != null) {
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(userService.createOrUpdateUser(userDTO));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
+        userDTO.setId(id);
+        return ResponseEntity.ok(userService.createOrUpdateUser(userDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUserById(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/role")
+    public ResponseEntity<?> getUserRole(@RequestParam String email) {
+        return ResponseEntity.ok(userService.getUserRole(email));
     }
 }
