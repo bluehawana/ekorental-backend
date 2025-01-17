@@ -2,6 +2,7 @@ package com.bluehawana.rentingcarsys.service;
 
 import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
+import com.bluehawana.rentingcarsys.mapper.BookingMapper;
 import com.bluehawana.rentingcarsys.model.Booking;
 import com.bluehawana.rentingcarsys.model.BookingStatus;
 import com.bluehawana.rentingcarsys.model.Car;
@@ -19,10 +20,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class BookingServiceImpl extends BookingService {
+public class BookingServiceImpl implements BookingService {
+
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final CarRepository carRepository;
+    private final BookingMapper bookingMapper;
 
     @Override
     @Transactional
@@ -38,8 +41,8 @@ public class BookingServiceImpl extends BookingService {
         }
 
         Booking booking = Booking.builder()
-                .userId(user.getId())
-                .carId(car.getId())
+                .user(user)
+                .car(car)
                 .status(BookingStatus.PENDING)
                 .startTime(bookingDTO.getStartTime())
                 .endTime(bookingDTO.getEndTime())
@@ -57,40 +60,43 @@ public class BookingServiceImpl extends BookingService {
     @Override
     public List<BookingResponseDTO> getAllBookings() {
         return bookingRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(bookingMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<Booking> getUserBookings(Long userId) {
-        return List.of();
+    public List<BookingResponseDTO> getUserBookings(Long userId) {
+        return bookingRepository.findByUserId(userId).stream()
+                .map(bookingMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Booking getBookingById(Long id) {
-        return null;
+    public BookingResponseDTO getBookingById(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        return bookingMapper.toDTO(booking);
     }
 
     @Override
+    @Transactional
     public Booking updateBooking(Long id, BookingDTO bookingDTO) {
-        return null;
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setStartTime(bookingDTO.getStartTime());
+        booking.setEndTime(bookingDTO.getEndTime());
+        booking.setTotalPrice(bookingDTO.getTotalPrice());
+        booking.setStatus(bookingDTO.getStatus());
+
+        return bookingRepository.save(booking);
     }
 
     @Override
+    @Transactional
     public void deleteBooking(Long id) {
-
-    }
-
-    private BookingResponseDTO convertToDTO(Booking booking) {
-        return new BookingResponseDTO(
-                booking.getId(),
-                booking.getUserId(),
-                booking.getStartTime(),
-                booking.getEndTime(),
-                booking.getCreatedAt(),
-                booking.getStatus(),
-                booking.getTotalPrice(),
-                booking.getCarId()
-        );
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        bookingRepository.delete(booking);
     }
 }

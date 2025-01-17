@@ -51,4 +51,21 @@ public class BookingController {
                     .body("{\"message\": \"An unexpected error occurred\"}");
         }
     }
+
+    @GetMapping("/bookings/{id}")
+    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
+        try {
+            BookingResponseDTO booking = bookingService.getBookingById(id);
+            if (booking == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"error\": \"Booking not found\"}");
+            }
+            return ResponseEntity.ok(booking);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"error\": \"Error fetching booking\"}");
+        }
+    }
 }

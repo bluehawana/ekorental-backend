@@ -19,8 +19,13 @@ public class BookingResponseDTO {
     private String status;
     private String totalPrice;
 
-    public BookingResponseDTO(Long id, Long userId, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt, BookingStatus status, BigDecimal totalPrice, Long carId) {
-        this.bookingId = id;
+    // No-argument constructor
+    public BookingResponseDTO() {
+    }
+
+    // Constructor with all fields
+    public BookingResponseDTO(Long bookingId, Long userId, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt, BookingStatus status, BigDecimal totalPrice, Long carId) {
+        this.bookingId = bookingId;
         this.userId = userId;
         this.startTime = startTime.toString();
         this.endTime = endTime.toString();
@@ -29,6 +34,7 @@ public class BookingResponseDTO {
         this.carId = carId;
     }
 
+    // Constructor with Booking object
     public BookingResponseDTO(Booking booking) {
         this.bookingId = booking.getId();
         this.userId = booking.getUserId();
@@ -37,5 +43,21 @@ public class BookingResponseDTO {
         this.status = booking.getStatus().toString();
         this.totalPrice = booking.getTotalPrice().toString();
         this.carId = booking.getCarId();
+    }
+
+    // Constructor with selected fields
+    public BookingResponseDTO(Long bookingId, Long userId, String startTime, String endTime, String status, String totalPrice, Long carId) {
+        this.bookingId = bookingId;
+        this.userId = userId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.totalPrice = totalPrice;
+        this.carId = carId;
+    }
+
+    // Setter for bookingId
+    public void setId(Long bookingId) {
+        this.bookingId = bookingId;
     }
 }
