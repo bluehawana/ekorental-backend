@@ -1,10 +1,12 @@
 package com.bluehawana.rentingcarsys.model;
 
+import com.bluehawana.rentingcarsys.dto.UserDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -15,16 +17,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Booking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Column(name = "user_id", insertable = false, updatable = false)
+    private Long userId;
+
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "car_id", nullable = false)
+    @Column(name = "car_id", insertable = false, updatable = false)
+    private Long carId;
+
+    @ManyToOne
+    @JoinColumn(name = "car_id", nullable = false) // Foreign key to the Car table
     private Car car;
 
     @Enumerated(EnumType.STRING)
@@ -48,11 +57,17 @@ public class Booking {
         createdAt = LocalDateTime.now();
     }
 
-    public Long getUserId() {
-        return user.getId();
+    public void setUser(User user) {
+        this.user = user;
+        this.userId = user.getId(); // Synchronize the ID field
     }
 
-    public Long getCarId() {
-        return car.getId();
+    public void setCar(Car car) {
+        this.car = car;
+        this.carId = car.getId(); // Synchronize the ID field
+    }
+
+    public UserDTO getUserDTO() {
+        return new UserDTO(userId);
     }
 }

@@ -24,7 +24,7 @@ public class BookingServiceImpl implements BookingService {
     private final CarRepository carRepository;
 
     @Override
-    public Booking createBooking(Long userId, Long carId, BookingDTO bookingDTO) {
+    public BookingResponseDTO createBooking(Long userId, Long carId, BookingDTO bookingDTO) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -39,7 +39,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setTotalPrice(bookingDTO.getTotalPrice());
         booking.setStatus(BookingStatus.PENDING);
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        return new BookingResponseDTO(savedBooking);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDTO> getBookingsByUser(User user) {
-        List<Booking> bookings = bookingRepository.findByUser(user);
+        List<Booking> bookings = bookingRepository.findByUserId(user.getId());
         return bookings.stream()
                 .map(BookingResponseDTO::new)
                 .collect(Collectors.toList());

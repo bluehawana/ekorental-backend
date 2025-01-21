@@ -29,7 +29,7 @@ public class BookingController {
         try {
             Long userId = bookingDTO.getUserId();
             Long carId = bookingDTO.getCarId();
-            Booking booking = bookingService.createBooking(userId, carId, bookingDTO);
+            BookingResponseDTO booking = bookingService.createBooking(userId, carId, bookingDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(booking);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

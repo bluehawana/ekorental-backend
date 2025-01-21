@@ -1,6 +1,5 @@
 package com.bluehawana.rentingcarsys.model;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +23,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
@@ -32,24 +32,8 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role = UserRole.USER;
-    private String providerId;
-
-    public User(Long userId) {
-        this.id = userId;
-    }
+    private UserRole role;
 
     public void setUsername(String username) {
-        this.name = username;
-    }
-
-    public GoogleIdToken.Payload getPayload() {
-        this.name = "test";
-        return null; // Replace with actual return value
-    }
-
-    public void setProviderId(Object providerId) {
-        this.providerId=providerId.toString();
     }
 }
-
