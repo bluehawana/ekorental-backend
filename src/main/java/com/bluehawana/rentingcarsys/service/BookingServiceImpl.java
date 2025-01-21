@@ -71,5 +71,25 @@ public class BookingServiceImpl implements BookingService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<BookingResponseDTO> getBookingsByUserId(Long userId) {
+        List<Booking> bookings = bookingRepository.findByUserId(userId);
+        return bookings.stream()
+                .map(BookingResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Service
+    public class BookingService {
+        private final BookingRepository bookingRepository;
+
+        public BookingService(BookingRepository bookingRepository) {
+            this.bookingRepository = bookingRepository;
+        }
+
+        public List<Booking> getBookingsByUserId(Long userId) {
+            return bookingRepository.findByUserId(userId);
+        }
+    }
     // ... other methods ...
 }

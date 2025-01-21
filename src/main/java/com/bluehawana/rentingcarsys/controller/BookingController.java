@@ -2,9 +2,9 @@ package com.bluehawana.rentingcarsys.controller;
 
 import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
-import com.bluehawana.rentingcarsys.model.Booking;
 import com.bluehawana.rentingcarsys.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -57,5 +57,14 @@ public class BookingController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(null);
         }
+    }
+
+    @GetMapping("bookings/user/{userId}")
+    public HttpEntity<List<BookingResponseDTO>> getBookingsByUserId(@PathVariable Long userId) {
+        List<BookingResponseDTO> bookings = bookingService.getBookingsByUserId(userId);
+        if (bookings.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(bookings);
+        }
+        return ResponseEntity.ok(bookings);
     }
 }

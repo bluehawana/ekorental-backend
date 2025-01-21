@@ -12,6 +12,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Changed from findByUser to findByUserId
     List<Booking> findByUserId(Long userId);
 
+
+
     @Query("SELECT b FROM Booking b " +
             "WHERE b.carId = :carId " +
             "AND b.status != 'CANCELLED' " +
