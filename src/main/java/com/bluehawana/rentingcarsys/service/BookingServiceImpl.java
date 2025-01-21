@@ -2,7 +2,6 @@ package com.bluehawana.rentingcarsys.service;
 
 import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
-import com.bluehawana.rentingcarsys.mapper.BookingMapper;
 import com.bluehawana.rentingcarsys.model.Booking;
 import com.bluehawana.rentingcarsys.model.BookingStatus;
 import com.bluehawana.rentingcarsys.model.Car;
@@ -12,9 +11,7 @@ import com.bluehawana.rentingcarsys.repository.CarRepository;
 import com.bluehawana.rentingcarsys.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,78 +22,53 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final CarRepository carRepository;
-    private final BookingMapper bookingMapper;
 
     @Override
-    @Transactional
-    public Booking createBooking(BookingDTO bookingDTO) {
-        User user = userRepository.findById(bookingDTO.getUserId())
+    public Booking createBooking(Long userId, Long carId, BookingDTO bookingDTO) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Car car = carRepository.findById(bookingDTO.getCarId())
+        Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new RuntimeException("Car not found"));
 
-        if (!isCarAvailable(car.getId(), bookingDTO.getStartTime(), bookingDTO.getEndTime())) {
-            throw new RuntimeException("Car is not available for the selected time period");
-        }
-
-        Booking booking = Booking.builder()
-                .user(user)
-                .car(car)
-                .status(BookingStatus.PENDING)
-                .startTime(bookingDTO.getStartTime())
-                .endTime(bookingDTO.getEndTime())
-                .totalPrice(bookingDTO.getTotalPrice())
-                .build();
+        Booking booking = new Booking();
+        booking.setUser(user);
+        booking.setCar(car);
+        booking.setStartTime(bookingDTO.getStartTime());
+        booking.setEndTime(bookingDTO.getEndTime());
+        booking.setTotalPrice(bookingDTO.getTotalPrice());
+        booking.setStatus(BookingStatus.PENDING);
 
         return bookingRepository.save(booking);
     }
 
-    private boolean isCarAvailable(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
-        // Implementation to check car availability
-        return true;
+    @Override
+    public List<BookingResponseDTO> getAllBookingsByUser() {
+        return List.of();
     }
 
     @Override
-    public List<BookingResponseDTO> getAllBookings() {
-        return bookingRepository.findAll().stream()
-                .map(bookingMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<BookingResponseDTO> getUserBookings(Long userId) {
-        return bookingRepository.findByUserId(userId).stream()
-                .map(bookingMapper::toDTO)
+    public List<BookingResponseDTO> getBookingsByUser(User user) {
+        List<Booking> bookings = bookingRepository.findByUser(user);
+        return bookings.stream()
+                .map(BookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     @Override
     public BookingResponseDTO getBookingById(Long id) {
-        Booking booking = bookingRepository.findById(id)
+        return bookingRepository.findById(id)
+                .map(BookingResponseDTO::new)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
-        return bookingMapper.toDTO(booking);
     }
 
     @Override
-    @Transactional
-    public Booking updateBooking(Long id, BookingDTO bookingDTO) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-
-        booking.setStartTime(bookingDTO.getStartTime());
-        booking.setEndTime(bookingDTO.getEndTime());
-        booking.setTotalPrice(bookingDTO.getTotalPrice());
-        booking.setStatus(bookingDTO.getStatus());
-
-        return bookingRepository.save(booking);
+    public List<BookingResponseDTO> getAllBookings() {
+        List<Booking> bookings = bookingRepository.findAll();
+        return bookings.stream()
+                .map(BookingResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional
-    public void deleteBooking(Long id) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-        bookingRepository.delete(booking);
-    }
+    // ... other methods ...
 }

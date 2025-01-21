@@ -1,63 +1,27 @@
 package com.bluehawana.rentingcarsys.dto;
 
 import com.bluehawana.rentingcarsys.model.Booking;
-import com.bluehawana.rentingcarsys.model.BookingStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 public class BookingResponseDTO {
-    private Long bookingId;
-    private Long carId;
+    private Long id;
     private Long userId;
+    private Long carId;
     private String startTime;
     private String endTime;
     private String status;
     private String totalPrice;
 
-    // No-argument constructor
-    public BookingResponseDTO() {
-    }
-
-    // Constructor with all fields
-    public BookingResponseDTO(Long bookingId, Long userId, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt, BookingStatus status, BigDecimal totalPrice, Long carId) {
-        this.bookingId = bookingId;
-        this.userId = userId;
-        this.startTime = startTime.toString();
-        this.endTime = endTime.toString();
-        this.status = status.toString();
-        this.totalPrice = totalPrice.toString();
-        this.carId = carId;
-    }
-
-    // Constructor with Booking object
     public BookingResponseDTO(Booking booking) {
-        this.bookingId = booking.getId();
-        this.userId = booking.getUserId();
+        this.id = booking.getId();
+        this.userId = booking.getUser().getId();
+        this.carId = booking.getCar().getId();
         this.startTime = booking.getStartTime().toString();
         this.endTime = booking.getEndTime().toString();
         this.status = booking.getStatus().toString();
         this.totalPrice = booking.getTotalPrice().toString();
-        this.carId = booking.getCarId();
-    }
-
-    // Constructor with selected fields
-    public BookingResponseDTO(Long bookingId, Long userId, String startTime, String endTime, String status, String totalPrice, Long carId) {
-        this.bookingId = bookingId;
-        this.userId = userId;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.status = status;
-        this.totalPrice = totalPrice;
-        this.carId = carId;
-    }
-
-    // Setter for bookingId
-    public void setId(Long bookingId) {
-        this.bookingId = bookingId;
     }
 }

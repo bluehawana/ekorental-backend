@@ -19,11 +19,13 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "userId", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "carId", nullable = false)
-    private Long carId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "car_id", nullable = false)
+    private Car car;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -46,11 +48,11 @@ public class Booking {
         createdAt = LocalDateTime.now();
     }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", insertable = false, updatable = false)
-    private User user;
+    public Long getUserId() {
+        return user.getId();
+    }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "carId", insertable = false, updatable = false)
-    private Car car;
+    public Long getCarId() {
+        return car.getId();
+    }
 }

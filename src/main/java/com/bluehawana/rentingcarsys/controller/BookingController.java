@@ -27,8 +27,10 @@ public class BookingController {
                     .body("{\"error\": \"Invalid booking data\"}");
         }
         try {
-            Booking booking = bookingService.createBooking(bookingDTO);
-            return ResponseEntity.ok(booking);
+            Long userId = bookingDTO.getUserId();
+            Long carId = bookingDTO.getCarId();
+            Booking booking = bookingService.createBooking(userId, carId, bookingDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(booking);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -41,31 +43,9 @@ public class BookingController {
     }
 
     @GetMapping("/bookings")
-    public ResponseEntity<?> getBookings() {
-        try {
-            List<BookingResponseDTO> bookings = bookingService.getAllBookings();
-            return ResponseEntity.ok(bookings);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"message\": \"An unexpected error occurred\"}");
-        }
+    public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
+        List<BookingResponseDTO> bookings = bookingService.getAllBookings();
+        return ResponseEntity.ok(bookings);
     }
 
-    @GetMapping("/bookings/{id}")
-    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
-        try {
-            BookingResponseDTO booking = bookingService.getBookingById(id);
-            if (booking == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body("{\"error\": \"Booking not found\"}");
-            }
-            return ResponseEntity.ok(booking);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\": \"Error fetching booking\"}");
-        }
-    }
 }
