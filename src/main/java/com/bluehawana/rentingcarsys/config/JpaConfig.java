@@ -7,8 +7,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @EnableTransactionManagement
-@EntityScan(basePackages = "com.bluehawana.rentingcarsys.model")
-@EnableJpaRepositories(basePackages = "com.bluehawana.rentingcarsys.repository")
+@EntityScan(basePackages = "com.bluehawana.rentingcarsys.model") // Scans for JPA entities
+@EnableJpaRepositories(basePackages = "com.bluehawana.rentingcarsys.repository") // Scans for JPA repositories
 public class JpaConfig {
-    // Configuration is handled by annotations
+    // All configuration is annotation-driven
 }
