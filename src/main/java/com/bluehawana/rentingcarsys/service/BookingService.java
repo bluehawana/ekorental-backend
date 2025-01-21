@@ -2,6 +2,7 @@ package com.bluehawana.rentingcarsys.service;
 
 import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
+import com.bluehawana.rentingcarsys.model.Booking;
 import com.bluehawana.rentingcarsys.model.User;
 
 import java.util.List;
@@ -17,4 +18,10 @@ public interface BookingService {
     List<BookingResponseDTO> getAllBookings();
 
     List<BookingResponseDTO> getBookingsByUserId(Long userId);
+
+    void deleteBooking(Long id);
+
+    BookingResponseDTO updateBooking(Long id, BookingDTO bookingDTO);
+
+    BookingResponseDTO updateBooking(Long id, Booking bookingDTO);
 }

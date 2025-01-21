@@ -91,5 +91,32 @@ public class BookingServiceImpl implements BookingService {
             return bookingRepository.findByUserId(userId);
         }
     }
+    @Override
+    public void deleteBooking(Long id) {
+        if (!bookingRepository.existsById(id)) {
+            throw new RuntimeException("Booking not found with id: " + id);
+        }
+        bookingRepository.deleteById(id);
+    }
+
+    @Override
+    public BookingResponseDTO updateBooking(Long id, BookingDTO bookingDTO) {
+        return null;
+    }
+
+    @Override
+    public BookingResponseDTO updateBooking(Long id, Booking bookingDTO) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setStartTime(bookingDTO.getStartTime());
+        booking.setEndTime(bookingDTO.getEndTime());
+        booking.setTotalPrice(bookingDTO.getTotalPrice());
+        booking.setStatus(bookingDTO.getStatus());
+
+        Booking updatedBooking = bookingRepository.save(booking);
+        return new BookingResponseDTO(updatedBooking);
+    }
+
     // ... other methods ...
 }

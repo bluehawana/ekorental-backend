@@ -67,4 +67,24 @@ public class BookingController {
         }
         return ResponseEntity.ok(bookings);
     }
+
+    @DeleteMapping("/bookings/{id}")
+    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+        try {
+            bookingService.deleteBooking(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Error deleting booking\"}");
+        }
+    }
+
+    @PutMapping("/bookings/{id}")
+    public BookingResponseDTO updateBooking(@PathVariable Long id, @RequestBody BookingDTO updatedBooking) {
+        return bookingService.updateBooking(id, updatedBooking);
+    }
+
 }

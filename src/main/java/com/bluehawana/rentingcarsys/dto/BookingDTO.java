@@ -1,5 +1,6 @@
 package com.bluehawana.rentingcarsys.dto;
 
+import com.bluehawana.rentingcarsys.model.BookingStatus;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,4 +13,9 @@ public class BookingDTO {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private BigDecimal totalPrice;
+
+    public BookingStatus getStatus() {
+        return BookingStatus.PENDING;
+
+    }
 }
