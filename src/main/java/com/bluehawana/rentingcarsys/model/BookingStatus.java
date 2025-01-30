@@ -4,6 +4,9 @@ package com.bluehawana.rentingcarsys.model;
 public enum BookingStatus {
     PENDING,
     CONFIRMED,
+    PAID,
+    PAYMENT_FAILED,
+    CONFIRMATION_FAILED,
     COMPLETED,
     CANCELLED,
 

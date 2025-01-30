@@ -2,7 +2,12 @@ package com.bluehawana.rentingcarsys.controller;
 
 import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
+import com.bluehawana.rentingcarsys.exception.BookingConfirmationException;
+import com.bluehawana.rentingcarsys.exception.CarNotAvailableException;
+import com.bluehawana.rentingcarsys.model.BookingStatus;
 import com.bluehawana.rentingcarsys.service.BookingService;
+import com.bluehawana.rentingcarsys.service.CarService;
+import com.bluehawana.rentingcarsys.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -18,6 +23,8 @@ import java.util.List;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final CarService carService;
+    private final NotificationService notificationService;
 
     @PostMapping("/bookings")
     public ResponseEntity<?> createBooking(@RequestBody BookingDTO bookingDTO) {
@@ -87,4 +94,46 @@ public class BookingController {
         return bookingService.updateBooking(id, updatedBooking);
     }
 
+    @PostMapping("/bookings/{id}/confirm")
+    public ResponseEntity<?> confirmBooking(@PathVariable Long id) {
+        try {
+            bookingService.confirmBooking(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Error confirming booking\"}");
+        } catch (CarNotAvailableException e) {
+            throw new RuntimeException(e);
+        } catch (BookingConfirmationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @PostMapping("/cars/{id}/availability")
+    public ResponseEntity<?> updateCarAvailability(@PathVariable Long id, @RequestParam boolean available) {
+        try {
+            carService.updateCarAvailability(id, available);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Error updating car availability\"}");
+        }
+    }
+
+    @PostMapping("/notifications/email")
+    public ResponseEntity<?> sendEmailConfirmation(@RequestParam Long bookingId) {
+        try {
+            notificationService.sendEmailConfirmation(bookingId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Error sending email confirmation\"}");
+        }
+    }
 }

@@ -59,6 +59,29 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
+    public Car updateCarAvailability(Long id, boolean available) {
+        Car car = getCarById(id);
+        car.setAvailable(available);
+        carRepository.save(car);
+        return car;
+    }
+
+    @Override
+    public boolean checkCarAvailability(Long id, String startDate, String endDate) {
+        return false;
+    }
+
+    @Override
+    public List<Car> getAvailableCars(String startDate, String endDate) {
+        return List.of();
+    }
+
+    @Override
+    public void handleBookingStatusChange(Long carId, String bookingStatus) {
+
+    }
+
+    @Override
     public boolean isCarAvailable(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
         // Verify car exists
         if (!carRepository.existsById(carId)) {

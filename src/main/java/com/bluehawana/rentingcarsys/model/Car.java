@@ -49,7 +49,7 @@ public class Car {
         return Optional.empty();
     }
 
-    public Object isAvailable() {
+    public boolean isAvailable() {
         if (isAvailable) {
             return true;
         }

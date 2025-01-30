@@ -14,5 +14,10 @@ public interface CarService {
     Car updateCar(Car car);
     void deleteCar(Long id);
 
+    Car updateCarAvailability(Long id, boolean available);
+    boolean checkCarAvailability(Long id, String startDate, String endDate);
+    List<Car> getAvailableCars(String startDate, String endDate);
+    void handleBookingStatusChange(Long carId, String bookingStatus);
+
     boolean isCarAvailable(Long carId, LocalDateTime startTime, LocalDateTime endTime);
 }

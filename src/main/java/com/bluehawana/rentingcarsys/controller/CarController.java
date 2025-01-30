@@ -1,5 +1,6 @@
 package com.bluehawana.rentingcarsys.controller;
 
+import com.bluehawana.rentingcarsys.dto.CarAvailabilityDTO;
 import com.bluehawana.rentingcarsys.model.Car;
 import com.bluehawana.rentingcarsys.service.CarService;
 import org.slf4j.Logger;
@@ -90,6 +91,63 @@ public class CarController {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
+        }
+    }
+    @PutMapping("/{id}/availability")
+    public ResponseEntity<?> updateCarAvailability(
+            @PathVariable Long id,
+            @RequestBody CarAvailabilityDTO availabilityDTO) {
+        try {
+            logger.info("Updating car availability for car ID: {}", id);
+            Car updatedCar = carService.updateCarAvailability(
+                    id,
+                    availabilityDTO.isAvailable()
+            );
+            return ResponseEntity.ok(updatedCar);
+        } catch (RuntimeException e) {
+            logger.error("Error updating car availability: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Unexpected error updating car availability", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error updating car availability"));
+        }
+    }
+
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<?> checkCarAvailability(
+            @PathVariable Long id,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            boolean isAvailable = carService.checkCarAvailability(id, startDate, endDate);
+            return ResponseEntity.ok(Map.of(
+                    "available", isAvailable,
+                    "message", isAvailable ? "Car is available" : "Car is not available for the selected dates"
+            ));
+        } catch (Exception e) {
+            logger.error("Error checking car availability", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<?> getAvailableCars(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            List<Car> availableCars = carService.getAvailableCars(startDate, endDate);
+            return ResponseEntity.ok(availableCars);
+        } catch (Exception e) {
+            logger.error("Error fetching available cars", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }

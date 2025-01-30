@@ -70,4 +70,23 @@ public class Booking {
     public UserDTO getUserDTO() {
         return new UserDTO(userId);
     }
+
+    public void setPaymentId(String paymentIntentId) {
+
+    }
+
+    public void setUpdatedAt(LocalDateTime now) {
+    }
+
+    public String getPaymentId() {
+        return null;
+    }
+
+    public LocalDateTime getStartDate() {
+       return startTime;
+    }
+
+    public LocalDateTime getEndDate() {
+        return endTime;
+    }
 }
