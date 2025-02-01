@@ -1,7 +1,11 @@
 package com.bluehawana.rentingcarsys.exception;
 
-public class CarNotAvailableException extends Throwable {
-    public CarNotAvailableException(String s) {
-        super(s);
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.CONFLICT)
+public class CarNotAvailableException extends RuntimeException {
+    public CarNotAvailableException(String message) {
+        super(message);
     }
 }

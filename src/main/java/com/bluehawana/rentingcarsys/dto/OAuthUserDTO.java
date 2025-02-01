@@ -15,6 +15,19 @@ public class OAuthUserDTO {
     private String provider;
     private String avatarUrl;
     private String role;
+    private String picature;
+    private String providerId;
+
+    public OAuthUserDTO(String email, String name, String picture, String providerId) {
+    }
+
+    public String getProviderId() {
+        return this.getProvider();
+    }
+
+    public String getPicture() {
+        return this.getPicature();
+    }
 }
 
 

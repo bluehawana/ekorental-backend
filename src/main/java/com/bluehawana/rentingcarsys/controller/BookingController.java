@@ -4,17 +4,25 @@ import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
 import com.bluehawana.rentingcarsys.exception.BookingConfirmationException;
 import com.bluehawana.rentingcarsys.exception.CarNotAvailableException;
+import com.bluehawana.rentingcarsys.exception.ErrorResponse;
 import com.bluehawana.rentingcarsys.model.BookingStatus;
+import com.bluehawana.rentingcarsys.model.ProviderType;
+import com.bluehawana.rentingcarsys.model.User;
 import com.bluehawana.rentingcarsys.service.BookingService;
 import com.bluehawana.rentingcarsys.service.CarService;
 import com.bluehawana.rentingcarsys.service.NotificationService;
+import com.bluehawana.rentingcarsys.util.SecurityUtils;
+import com.bluehawana.rentingcarsys.repository.UserRepository;
+import com.google.common.io.Files;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -22,30 +30,33 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingController {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingController.class);
+
     private final BookingService bookingService;
     private final CarService carService;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
+    // After
     @PostMapping("/bookings")
-    public ResponseEntity<?> createBooking(@RequestBody BookingDTO bookingDTO) {
-        if (bookingDTO == null || bookingDTO.getUserId() == null || bookingDTO.getCarId() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\": \"Invalid booking data\"}");
-        }
+    public ResponseEntity<?> createBooking(@RequestBody BookingDTO bookingDTO) throws CarNotAvailableException {
+        log.info("Received booking request: {}", bookingDTO);
+
         try {
-            Long userId = bookingDTO.getUserId();
-            Long carId = bookingDTO.getCarId();
-            BookingResponseDTO booking = bookingService.createBooking(userId, carId, bookingDTO);
+            User user = userRepository.findById(SecurityUtils.getCurrentUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            BookingResponseDTO booking = bookingService.createBooking(
+                    user.getId(),
+                    bookingDTO.getCarId(),
+                    bookingDTO
+            );
+
+            log.info("Booking created successfully: {}", booking);
             return ResponseEntity.status(HttpStatus.CREATED).body(booking);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         } catch (Exception e) {
+            log.error("Error creating booking: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\": \"Error creating booking\"}");
+                    .body(new ErrorResponse(e.getMessage()));
         }
     }
 
@@ -67,8 +78,8 @@ public class BookingController {
     }
 
     @GetMapping("bookings/user/{userId}")
-    public HttpEntity<List<BookingResponseDTO>> getBookingsByUserId(@PathVariable Long userId) {
-        List<BookingResponseDTO> bookings = bookingService.getBookingsByUserId(userId);
+    public ResponseEntity<List<Object>> getBookingsByUserId(@PathVariable Long userId) {
+        List<Object> bookings = Collections.singletonList(bookingService.getBookingsByUserId(userId));
         if (bookings.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(bookings);
         }
@@ -105,10 +116,6 @@ public class BookingController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("{\"error\": \"Error confirming booking\"}");
-        } catch (CarNotAvailableException e) {
-            throw new RuntimeException(e);
-        } catch (BookingConfirmationException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -129,7 +136,7 @@ public class BookingController {
     @PostMapping("/notifications/email")
     public ResponseEntity<?> sendEmailConfirmation(@RequestParam Long bookingId) {
         try {
-            notificationService.sendEmailConfirmation(bookingId);
+            notificationService.sendPaymentConfirmation(bookingId);  // Changed from sendEmailConfirmation
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

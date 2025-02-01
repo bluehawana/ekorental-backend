@@ -1,7 +1,11 @@
 package com.bluehawana.rentingcarsys.exception;
 
-public class PaymentException extends Throwable {
-    public PaymentException(String s) {
-        super(s);
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class PaymentException extends RuntimeException {
+    public PaymentException(String message) {
+        super(message);
     }
 }

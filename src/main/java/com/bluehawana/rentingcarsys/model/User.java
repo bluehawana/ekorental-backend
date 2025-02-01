@@ -1,39 +1,37 @@
-package com.bluehawana.rentingcarsys.model;
+ package com.bluehawana.rentingcarsys.model;
+ 
+ import jakarta.persistence.*;
+ import lombok.*;
+ 
+ @Entity
+ @Table(name = "users")
+ @Data
+ @Builder
+ @AllArgsConstructor
+ @NoArgsConstructor
+ public class User {
+     @Id
+     @GeneratedValue(strategy = GenerationType.IDENTITY)
+     private Long id;
+ 
+     @Column(unique = true, nullable = false)
+     private String email;
+ 
+     private String name;
+     private String picture;
+     private String providerId;  // This will store Google's sub/ID
+ 
+     @Column(nullable = false)
+     private String provider = "google";  // Default to google
+ 
+     private String role = "USER";
+ 
+     public void setAvatarUrl(String avatarUrl) {
+         this.picture = avatarUrl;
+     }
+ 
+     public void setUsername(String username) {
+         this.name = username;
+     }
+ }
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Entity
-@Table(name = "users")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String avatarUrl;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AuthProvider provider;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
-
-    public void setUsername(String username) {
-    }
-}

@@ -1,27 +1,26 @@
 package com.bluehawana.rentingcarsys.dto;
 
-import com.bluehawana.rentingcarsys.model.Booking;
+import com.bluehawana.rentingcarsys.model.BookingStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class BookingResponseDTO {
     private Long id;
     private Long userId;
     private Long carId;
-    private String startTime;
-    private String endTime;
-    private String status;
-    private String totalPrice;
-
-    public BookingResponseDTO(Booking booking) {
-        this.id = booking.getId();
-        this.userId = booking.getUser().getId();
-        this.carId = booking.getCar().getId();
-        this.startTime = booking.getStartTime().toString();
-        this.endTime = booking.getEndTime().toString();
-        this.status = booking.getStatus().toString();
-        this.totalPrice = booking.getTotalPrice().toString();
-    }
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private BookingStatus status;
+    private BigDecimal totalPrice;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

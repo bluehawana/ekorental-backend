@@ -10,16 +10,18 @@ import java.util.Arrays;
 
 @Configuration
 public class CorsConfig {
-
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        config.addAllowedOrigin("http://localhost:3000"); // Frontend origin
-        config.addAllowedHeader("*"); // Allow all headers
-        config.addAllowedMethod("*"); // Allow all methods
-        config.setAllowCredentials(true); // Allow credentials
+        // Keep existing settings
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        config.setAllowCredentials(true);
+
+        // Keep existing exposed headers
         config.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
@@ -28,7 +30,10 @@ public class CorsConfig {
                 "Access-Control-Allow-Headers"
         ));
 
+        // Apply to all paths
         source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);  // Extra coverage for API endpoints
+
         return new CorsFilter(source);
     }
 }

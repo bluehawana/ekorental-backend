@@ -7,15 +7,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class BookingMapper {
 
-    public BookingResponseDTO toDTO(Booking booking) {
-        return new BookingResponseDTO(
-                booking.getId(),
-                booking.getUser().getId(),
-                booking.getCar().getId(),
-                booking.getStartTime().toString(),
-                booking.getEndTime().toString(),
-                booking.getStatus().toString(),
-                booking.getTotalPrice().toString()
-        );
+    public BookingResponseDTO toDTOBuilder(Booking booking) {
+        return BookingResponseDTO.builder()
+                .id(booking.getId())
+                .userId(booking.getUser().getId())
+                .carId(booking.getCar().getId())
+                .startDate(booking.getStartTime())
+                .endDate(booking.getEndTime())
+                .status(booking.getStatus())
+                .totalPrice(booking.getTotalPrice())
+                .createdAt(booking.getCreatedAt())
+                .updatedAt(booking.getUpdatedAt())
+                .build();
     }
 }

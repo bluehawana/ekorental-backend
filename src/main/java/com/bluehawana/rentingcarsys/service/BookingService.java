@@ -13,22 +13,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingService {
-    // Existing methods
-    BookingResponseDTO createBooking(Long userId, Long carId, BookingDTO bookingDTO);
-    List<BookingResponseDTO> getAllBookingsByUser();
-    List<BookingResponseDTO> getBookingsByUser(User user);
+    // Core booking operations
+    BookingResponseDTO createBooking(Long userId, Long carId, BookingDTO bookingDTO) throws CarNotAvailableException;
     BookingResponseDTO getBookingById(Long id);
     List<BookingResponseDTO> getAllBookings();
-    List<BookingResponseDTO> getBookingsByUserId(Long userId);
     void deleteBooking(Long id);
     BookingResponseDTO updateBooking(Long id, BookingDTO bookingDTO);
-    BookingResponseDTO updateBooking(Long id, Booking bookingDTO);
 
-    // New methods for enhanced functionality
+    // User-specific booking operations
+    List<BookingResponseDTO> getAllBookingsByUser();
+    List<BookingResponseDTO> getBookingsByUser(User user);
+    List<BookingResponseDTO> getBookingsByUserId(Long userId);
+
+    BookingResponseDTO updateBooking(Long id, Booking updatedBooking);
+
+    // Status and payment management
     void updateBookingStatus(Long id, BookingStatus status);
     void confirmBooking(Long id) throws BookingConfirmationException, CarNotAvailableException;
     void processPayment(Long bookingId, String paymentIntentId) throws PaymentException;
-    void sendBookingConfirmation(Long bookingId);
-    boolean isCarAvailableForDates(Long carId, LocalDateTime startDate, LocalDateTime endDate);
     void cancelBooking(Long id) throws PaymentException;
+
+    // Availability checks and notifications
+    boolean isCarAvailableForDates(Long carId, LocalDateTime startDate, LocalDateTime endDate);
+    void sendBookingConfirmation(Long bookingId);
+
+    // DTO mapping
+    BookingResponseDTO mapToBookingResponseDTO(Booking booking);
 }

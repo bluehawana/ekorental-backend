@@ -2,13 +2,17 @@ package com.bluehawana.rentingcarsys.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payments")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {
@@ -22,7 +26,7 @@ public class Payment {
     private String clientSecret;
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
     @Column(nullable = false)
     private String currency;
@@ -30,7 +34,6 @@ public class Payment {
     private String paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private PaymentStatus status;
 
     private String refundId;
@@ -46,17 +49,10 @@ public class Payment {
     @JoinColumn(name = "booking_id")
     private Booking booking;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    @ManyToOne
+    @JoinColumn(name = "user_id")
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public Long getUserId() {
-        return booking.getUser().getId();
+    public User getUser() {
+        return booking.getUser();
     }
 }

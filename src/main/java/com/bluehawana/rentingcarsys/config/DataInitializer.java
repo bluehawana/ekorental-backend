@@ -25,7 +25,6 @@ public class DataInitializer {
 
             List<Car> savedCars = null;
 
-            // Create cars only if cars table is empty
             if (carRepository.count() == 0) {
                 log.info("No cars found. Creating sample cars...");
                 List<Car> cars = List.of(
@@ -90,79 +89,73 @@ public class DataInitializer {
                                 .description("Roadster: High-performance sports car.")
                                 .build()
                 );
-               savedCars = carRepository.saveAll(cars);
+                savedCars = carRepository.saveAll(cars);
                 log.info("Created {} cars", savedCars.size());
                 log.info("Sample cars created successfully");
             } else {
                 log.info("Cars already exist in database");
             }
 
-            // First get or create the test user
             if (userRepository.count() == 0) {
                 User testUser1 = userRepository.save(User.builder()
                         .name("Test User")
                         .email("user@ekorental.com")
-                        .avatarUrl("https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser")
-                        .provider(AuthProvider.EMAIL)
-                        .role(UserRole.USER)
+                        .picture("https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser")
+                        .provider("EMAIL")
+                        .role("USER")
                         .build());
 
                 User adminUser = userRepository.save(User.builder()
                         .name("Admin User")
                         .email("admin@ekorental.com")
-                        .avatarUrl("https://api.dicebear.com/7.x/avataaars/svg?seed=Admin")
-                        .provider(AuthProvider.EMAIL)
-                        .role(UserRole.ADMIN)
+                        .picture("https://api.dicebear.com/7.x/avataaars/svg?seed=Admin")
+                        .provider("EMAIL")
+                        .role("ADMIN")
                         .build());
 
                 log.info("Users created successfully");
 
-                // Only create bookings if there are no bookings AND we just created users
                 if (bookingRepository.count() == 0 && savedCars != null && !savedCars.isEmpty()) {
                     Car firstCar = savedCars.get(0);
                     log.info("Creating bookings for car: {} (ID: {})", firstCar.getModel(), firstCar.getId());
                     try {
-                        // Past booking (completed)
                         Booking pastBooking = bookingRepository.save(Booking.builder()
                                 .user(testUser1)
                                 .car(firstCar)
-                                .status(BookingStatus.COMPLETED)
+                                .status(BookingStatus.valueOf("COMPLETED"))
                                 .startTime(LocalDateTime.now().minusDays(7))
                                 .endTime(LocalDateTime.now().minusDays(6))
                                 .totalPrice(new BigDecimal("220.00"))
+                                .createdAt(LocalDateTime.now().minusDays(7))
+                                .updatedAt(LocalDateTime.now().minusDays(6))
                                 .build());
                         log.info("Created past booking with ID: {}", pastBooking.getId());
-                        // Current active booking
-                        Booking currentBooking = bookingRepository.save(Booking.builder()
+
+                        // Add new bookings in the specified format
+                        Booking booking1 = bookingRepository.save(Booking.builder()
                                 .user(testUser1)
                                 .car(firstCar)
-                                .status(BookingStatus.CONFIRMED)
-                                .startTime(LocalDateTime.now().minusHours(2))
-                                .endTime(LocalDateTime.now().plusHours(2))
-                                .totalPrice(new BigDecimal("110.00"))
+                                .status(BookingStatus.valueOf("PENDING"))
+                                .startTime(LocalDateTime.parse("2025-01-15T10:00:00"))
+                                .endTime(LocalDateTime.parse("2025-01-15T12:00:00"))
+                                .totalPrice(new BigDecimal("220.00"))
+                                .createdAt(LocalDateTime.now().minusDays(7))
+                                .updatedAt(LocalDateTime.now().minusDays(6))
                                 .build());
-                        log.info("Created current booking with ID: {}", currentBooking.getId());
-                        // Future booking (pending)
-                        Booking futureBooking = bookingRepository.save(Booking.builder()
-                                .user(testUser1)
+                        log.info("Created booking with ID: {}", booking1.getId());
+
+                        Booking booking2 = bookingRepository.save(Booking.builder()
+                                .user(adminUser)
                                 .car(firstCar)
-                                .status(BookingStatus.PENDING)
-                                .startTime(LocalDateTime.now().plusDays(1))
-                                .endTime(LocalDateTime.now().plusDays(2))
+                                .status(BookingStatus.valueOf("CONFIRMED"))
+                                .startTime(LocalDateTime.parse("2025-01-16T14:00:00"))
+                                .endTime(LocalDateTime.parse("2025-01-16T18:00:00"))
                                 .totalPrice(new BigDecimal("440.00"))
+                                .createdAt(LocalDateTime.now().minusDays(7))
+                                .updatedAt(LocalDateTime.now().minusDays(6))
                                 .build());
-                        log.info("Created future booking with ID: {}", futureBooking.getId());
-                        // Cancelled booking
-                        Booking cancelledBooking = bookingRepository.save(Booking.builder()
-                                .user(testUser1)
-                                .car(firstCar)
-                                .status(BookingStatus.CANCELLED)
-                                .startTime(LocalDateTime.now().plusDays(5))
-                                .endTime(LocalDateTime.now().plusDays(6))
-                                .totalPrice(new BigDecimal("330.00"))
-                                .build());
-                        log.info("Created cancelled booking with ID: {}", cancelledBooking.getId());
-                        log.info("Successfully created all test bookings");
+                        log.info("Created booking with ID: {}", booking2.getId());
+
                     } catch (Exception e) {
                         log.error("Error creating bookings: {}", e.getMessage());
                     }
@@ -172,7 +165,7 @@ public class DataInitializer {
             } else {
                 log.info("Users already exist in database");
             }
-            // Log final counts
+
             log.info("Initialized database with:");
             log.info(" - {} cars", carRepository.count());
             log.info(" - {} users", userRepository.count());

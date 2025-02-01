@@ -19,48 +19,18 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String model;
-
-    @Column(nullable = false, unique = true)
     private String licensePlate;
-
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal hourRate;
-
     private String imageUrl;
-
-    @Column(nullable = false)
-    private Boolean isAvailable = true;
-
-    @Column(nullable = false)
+    private boolean isAvailable;
     private String location;
-
     private Integer year;
-
-    @Column(length = 500)
     private String description;
 
-    public Car(Long carId) {
-        this.id = carId;
+    public BigDecimal getPricePerDay() {
+        return hourRate.multiply(BigDecimal.valueOf(24));
     }
 
-    public Optional<Car> map(Object o) {
-        return Optional.empty();
-    }
-
-    public boolean isAvailable() {
-        if (isAvailable) {
-            return true;
-        }
-        return false;
-    }
-
-    public void setAvailable(Object available) {
-        if (available.equals(true)) {
-            isAvailable = true;
-        } else {
-            isAvailable = false;
-        }
-    }
+    // Add any other fields you have
 }

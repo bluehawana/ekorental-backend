@@ -8,14 +8,10 @@ import java.time.LocalDateTime;
 
 @Data
 public class BookingDTO {
-    private Long userId;
     private Long carId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private BigDecimal totalPrice;
-
-    public BookingStatus getStatus() {
-        return BookingStatus.PENDING;
-
-    }
+    private String userEmail;
+    private String providerId;
+    private String providerType;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }

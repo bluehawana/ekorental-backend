@@ -61,8 +61,8 @@ public class UserDTO {
         return address;
     }
 
-    public UserRole getRole() {
-        return UserRole.valueOf(role.toUpperCase());
+    public String getRole() {
+        return role;
     }
 
     public String getName() {

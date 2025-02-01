@@ -18,10 +18,10 @@ public class UserServiceImpl extends UserService {
     }
 
     @Override
-    public UserRole getUserRole(String email) {
+    public String getUserRole(String email) {
         return userRepository.findByEmail(email)
                 .map(User::getRole)
-                .orElse(UserRole.USER);
+                .orElse(String.valueOf(UserRole.USER));
     }
 
     @Override
