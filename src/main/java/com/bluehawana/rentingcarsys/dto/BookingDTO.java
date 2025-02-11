@@ -9,9 +9,15 @@ import java.time.LocalDateTime;
 @Data
 public class BookingDTO {
     private Long carId;
-    private String userEmail;
-    private String providerId;
-    private String providerType;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDateTime startTime;  // Changed from startDate
+    private LocalDateTime endTime;    // Changed from endDate
+    private BigDecimal totalPrice;
+
+    public LocalDateTime getStartDate() {
+        return startTime;
+    }
+
+    public LocalDateTime getEndDate() {
+        return endTime;
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -23,11 +24,9 @@ public class DataInitializer {
         return args -> {
             log.info("Starting database initialization check...");
 
-            List<Car> savedCars = null;
-
             if (carRepository.count() == 0) {
                 log.info("No cars found. Creating sample cars...");
-                List<Car> cars = List.of(
+                List<Car> cars = Arrays.asList(
                         Car.builder()
                                 .model("Tesla Model 3")
                                 .licensePlate("ABC123")
@@ -89,87 +88,59 @@ public class DataInitializer {
                                 .description("Roadster: High-performance sports car.")
                                 .build()
                 );
-                savedCars = carRepository.saveAll(cars);
+
+                List<Car> savedCars = carRepository.saveAll(cars);
                 log.info("Created {} cars", savedCars.size());
-                log.info("Sample cars created successfully");
-            } else {
-                log.info("Cars already exist in database");
+
+                // Print each saved car for verification
+                savedCars.forEach(car ->
+                        log.info("Saved car: ID={}, Model={}", car.getId(), car.getModel())
+                );
             }
+
+            // Log final car count
+            log.info("Total cars in database: {}", carRepository.count());
 
             if (userRepository.count() == 0) {
-                User testUser1 = userRepository.save(User.builder()
-                        .name("Test User")
-                        .email("user@ekorental.com")
-                        .picture("https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser")
-                        .provider("EMAIL")
-                        .role("USER")
-                        .build());
+                User testUser = new User();
+                testUser.setName("Test User");
+                testUser.setEmail("user@ekorental.com");
+                testUser.setProvider("EMAIL");
+                testUser.setRole("USER");
+                User savedUser = userRepository.saveAndFlush(testUser);
+                log.info("Created user with ID: {}", savedUser.getId());
 
-                User adminUser = userRepository.save(User.builder()
-                        .name("Admin User")
-                        .email("admin@ekorental.com")
-                        .picture("https://api.dicebear.com/7.x/avataaars/svg?seed=Admin")
-                        .provider("EMAIL")
-                        .role("ADMIN")
-                        .build());
+                // Get a car
+                List<Car> cars = carRepository.findAll();
+                if (!cars.isEmpty()) {
+                    Car firstCar = cars.get(0);
+                    log.info("Found car with ID: {}", firstCar.getId());
 
-                log.info("Users created successfully");
+                    // Create bookings
+                    Booking booking1 = new Booking();
+                    booking1.setUser(savedUser);
+                    booking1.setCar(firstCar);
+                    booking1.setStatus(BookingStatus.PENDING);
+                    booking1.setStartTime(LocalDateTime.now().plusDays(1));
+                    booking1.setEndTime(LocalDateTime.now().plusDays(2));
+                    booking1.setTotalPrice(new BigDecimal("110.00"));
+                    booking1.setCreatedAt(LocalDateTime.now());
+                    booking1.setUpdatedAt(LocalDateTime.now());
 
-                if (bookingRepository.count() == 0 && savedCars != null && !savedCars.isEmpty()) {
-                    Car firstCar = savedCars.get(0);
-                    log.info("Creating bookings for car: {} (ID: {})", firstCar.getModel(), firstCar.getId());
                     try {
-                        Booking pastBooking = bookingRepository.save(Booking.builder()
-                                .user(testUser1)
-                                .car(firstCar)
-                                .status(BookingStatus.valueOf("COMPLETED"))
-                                .startTime(LocalDateTime.now().minusDays(7))
-                                .endTime(LocalDateTime.now().minusDays(6))
-                                .totalPrice(new BigDecimal("220.00"))
-                                .createdAt(LocalDateTime.now().minusDays(7))
-                                .updatedAt(LocalDateTime.now().minusDays(6))
-                                .build());
-                        log.info("Created past booking with ID: {}", pastBooking.getId());
-
-                        // Add new bookings in the specified format
-                        Booking booking1 = bookingRepository.save(Booking.builder()
-                                .user(testUser1)
-                                .car(firstCar)
-                                .status(BookingStatus.valueOf("PENDING"))
-                                .startTime(LocalDateTime.parse("2025-01-15T10:00:00"))
-                                .endTime(LocalDateTime.parse("2025-01-15T12:00:00"))
-                                .totalPrice(new BigDecimal("220.00"))
-                                .createdAt(LocalDateTime.now().minusDays(7))
-                                .updatedAt(LocalDateTime.now().minusDays(6))
-                                .build());
-                        log.info("Created booking with ID: {}", booking1.getId());
-
-                        Booking booking2 = bookingRepository.save(Booking.builder()
-                                .user(adminUser)
-                                .car(firstCar)
-                                .status(BookingStatus.valueOf("CONFIRMED"))
-                                .startTime(LocalDateTime.parse("2025-01-16T14:00:00"))
-                                .endTime(LocalDateTime.parse("2025-01-16T18:00:00"))
-                                .totalPrice(new BigDecimal("440.00"))
-                                .createdAt(LocalDateTime.now().minusDays(7))
-                                .updatedAt(LocalDateTime.now().minusDays(6))
-                                .build());
-                        log.info("Created booking with ID: {}", booking2.getId());
-
+                        Booking savedBooking = bookingRepository.saveAndFlush(booking1);
+                        log.info("Created booking with ID: {}", savedBooking.getId());
                     } catch (Exception e) {
-                        log.error("Error creating bookings: {}", e.getMessage());
+                        log.error("Error saving booking: ", e);
+                        e.printStackTrace();
                     }
-                } else {
-                    log.error("No cars available to create bookings");
-                }
-            } else {
-                log.info("Users already exist in database");
-            }
 
-            log.info("Initialized database with:");
-            log.info(" - {} cars", carRepository.count());
-            log.info(" - {} users", userRepository.count());
-            log.info(" - {} bookings", bookingRepository.count());
+                    // Verify the save
+                    bookingRepository.flush();
+                    long count = bookingRepository.count();
+                    log.info("Number of bookings after save: {}", count);
+                }
+            }
         };
     }
 }

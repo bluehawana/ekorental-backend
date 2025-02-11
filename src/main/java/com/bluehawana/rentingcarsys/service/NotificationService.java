@@ -2,19 +2,11 @@ package com.bluehawana.rentingcarsys.service;
 
 import com.bluehawana.rentingcarsys.exception.ResourceNotFoundException;
 import com.bluehawana.rentingcarsys.model.Booking;
-import com.bluehawana.rentingcarsys.model.Payment;
-import com.bluehawana.rentingcarsys.model.User;
 import com.bluehawana.rentingcarsys.repository.BookingRepository;
-import com.bluehawana.rentingcarsys.repository.UserRepository;
-import com.bluehawana.rentingcarsys.repository.PaymentRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import com.bluehawana.rentingcarsys.exception.ResourceNotFoundException;
-import com.bluehawana.rentingcarsys.exception.PaymentException;
-import com.bluehawana.rentingcarsys.exception.BookingConfirmationException;
-import com.bluehawana.rentingcarsys.exception.CarNotAvailableException;
-import org.springframework.mail.SimpleMailMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -23,11 +15,12 @@ import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
     private final JavaMailSender emailSender;
     private final BookingRepository bookingRepository;
 
-    // Email templates
+    // Email templates remain the same...
     private static final String PAYMENT_CONFIRMATION_TEMPLATE = """
         Dear %s,
         
@@ -80,6 +73,49 @@ public class NotificationService {
         Your Car Rental Team
         """;
 
+    public void sendBookingConfirmation(Booking booking) {
+        try {
+            String emailContent = createBookingConfirmationMessage(booking);
+            sendEmail(booking.getUser().getEmail(), "Booking Confirmation - #" + booking.getId(), emailContent);
+            log.info("Confirmation email sent for booking: {}", booking.getId());
+        } catch (Exception e) {
+            log.error("Failed to send confirmation email for booking: {}", booking.getId(), e);
+        }
+    }
+
+    public void sendPaymentConfirmation(Long bookingId) {
+        try {
+            Booking booking = bookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+            String emailContent = createPaymentConfirmationMessage(booking);
+            sendEmail(booking.getUser().getEmail(), "Payment Confirmation", emailContent);
+            log.info("Payment confirmation email sent for booking: {}", bookingId);
+        } catch (Exception e) {
+            log.error("Failed to send payment confirmation email for booking: {}", bookingId, e);
+        }
+    }
+
+    public void sendBookingCancellation(Booking booking) {
+        try {
+            String emailContent = createBookingCancellationMessage(booking);
+            sendEmail(booking.getUser().getEmail(), "Booking Cancellation", emailContent);
+            log.info("Cancellation email sent for booking: {}", booking.getId());
+        } catch (Exception e) {
+            log.error("Failed to send cancellation email for booking: {}", booking.getId(), e);
+        }
+    }
+
+    public void sendBookingCompletionConfirmation(Booking booking) {
+        try {
+            String emailContent = createBookingCompletionMessage(booking);
+            sendEmail(booking.getUser().getEmail(), "Booking Completed", emailContent);
+            log.info("Completion email sent for booking: {}", booking.getId());
+        } catch (Exception e) {
+            log.error("Failed to send completion email for booking: {}", booking.getId(), e);
+        }
+    }
+
     private String createPaymentConfirmationMessage(Booking booking) {
         return String.format(PAYMENT_CONFIRMATION_TEMPLATE,
                 booking.getUser().getName(),
@@ -114,29 +150,6 @@ public class NotificationService {
         );
     }
 
-    public void sendPaymentConfirmation(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        String emailContent = createPaymentConfirmationMessage(booking);
-        sendEmail(booking.getUser().getEmail(), "Payment Confirmation", emailContent);
-    }
-
-    public void sendBookingConfirmation(Booking booking) {
-        String emailContent = createBookingConfirmationMessage(booking);
-        sendEmail(booking.getUser().getEmail(), "Booking Confirmation", emailContent);
-    }
-
-    public void sendBookingCancellation(Booking booking) {
-        String emailContent = createBookingCancellationMessage(booking);
-        sendEmail(booking.getUser().getEmail(), "Booking Cancellation", emailContent);
-    }
-
-    public void sendBookingCompletionConfirmation(Booking booking) {
-        String emailContent = createBookingCompletionMessage(booking);
-        sendEmail(booking.getUser().getEmail(), "Booking Completed", emailContent);
-    }
-
     private void sendEmail(String to, String subject, String content) {
         try {
             MimeMessage message = emailSender.createMimeMessage();
@@ -148,6 +161,7 @@ public class NotificationService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
+            log.error("Failed to send email: {}", e.getMessage());
             throw new RuntimeException("Failed to send email", e);
         }
     }

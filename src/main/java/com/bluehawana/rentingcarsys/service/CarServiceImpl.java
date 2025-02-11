@@ -4,6 +4,8 @@ import com.bluehawana.rentingcarsys.exception.ResourceNotFoundException;
 import com.bluehawana.rentingcarsys.model.Car;
 import com.bluehawana.rentingcarsys.repository.CarRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,11 +14,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
     private final CarRepository carRepository;
+    private static final Logger logger = LoggerFactory.getLogger(CarServiceImpl.class);
 
     @Override
     public Car createCar(Car car) {
@@ -25,7 +29,15 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public Car getCarById(Long id) {
-        return null;
+        logger.info("Attempting to fetch car with ID: {}", id);
+        Car car = carRepository.findById(id)
+                .orElse(null);
+        if (car != null) {
+            logger.info("Found car: {}", car);
+        } else {
+            logger.warn("No car found with ID: {}", id);
+        }
+        return car;
     }
 
     @Override

@@ -34,7 +34,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",  // Next.js development server
                 "http://localhost:8080",  // Alternative local development
-                "http://localhost:8080/upload"  // Allow access to car photos
+                "http://localhost:8080/uploads"  // Allow access to car photos
         ));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"

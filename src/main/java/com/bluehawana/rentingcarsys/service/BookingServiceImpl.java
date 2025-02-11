@@ -38,6 +38,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public BookingResponseDTO updateBooking(Long id, Booking updatedBooking) {
+        return null;
+    }
+
+    @Override
+    @Transactional
     public BookingResponseDTO createBooking(Long userId, Long carId, BookingDTO bookingDTO) throws CarNotAvailableException {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -49,16 +55,18 @@ public class BookingServiceImpl implements BookingService {
             throw new CarNotAvailableException("Car is not available for booking");
         }
 
-        Booking booking = Booking.builder()
-                .user(user)
-                .car(car)
-                .startTime(bookingDTO.getStartDate())
-                .endTime(bookingDTO.getEndDate())
-                .status(BookingStatus.PENDING)
-                .totalPrice(carService.calculateTotalPrice(car, bookingDTO.getStartDate(), bookingDTO.getEndDate()))
-                .build();
+        Booking booking = new Booking();
+        booking.setUser(user);
+        booking.setCar(car);
+        booking.setStartTime(bookingDTO.getStartTime());
+        booking.setEndTime(bookingDTO.getEndTime());
+        booking.setStatus(BookingStatus.PENDING);
+        booking.setTotalPrice(bookingDTO.getTotalPrice());
+        booking.setCreatedAt(LocalDateTime.now());
+        booking.setUpdatedAt(LocalDateTime.now());
 
-        return mapToBookingResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+        return mapToBookingResponseDTO(savedBooking);
     }
 
     @Override
@@ -122,19 +130,6 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStartTime(bookingDTO.getStartDate());
         booking.setEndTime(bookingDTO.getEndDate());
-        booking.setUpdatedAt(LocalDateTime.now());
-
-        return mapToBookingResponseDTO(bookingRepository.save(booking));
-    }
-
-    @Override
-    public BookingResponseDTO updateBooking(Long id, Booking updatedBooking) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        booking.setStartTime(updatedBooking.getStartTime());
-        booking.setEndTime(updatedBooking.getEndTime());
-        booking.setStatus(updatedBooking.getStatus());
         booking.setUpdatedAt(LocalDateTime.now());
 
         return mapToBookingResponseDTO(bookingRepository.save(booking));
@@ -221,17 +216,33 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public void sendBookingConfirmation(Long bookingId) {
-
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        notificationService.sendBookingConfirmation(booking);
     }
 
     @Override
     public boolean isCarAvailableForDates(Long carId, LocalDateTime startDate, LocalDateTime endDate) {
-        return false;
+        List<Booking> bookings = bookingRepository.findByCar_IdAndStatus(carId, BookingStatus.CONFIRMED);
+        for (Booking booking : bookings) {
+            if (startDate.isBefore(booking.getEndTime()) && endDate.isAfter(booking.getStartTime())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     public void cancelBooking(Long id) throws PaymentException {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+
+        carService.updateCarAvailability(booking.getCar().getId(), true);
+        notificationService.sendBookingCancellation(booking);
     }
 
     public List<BookingResponseDTO> findBookingsByUserAndProvider(String email, ProviderType provider) {

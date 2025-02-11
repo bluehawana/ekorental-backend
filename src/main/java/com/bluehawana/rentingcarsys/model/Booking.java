@@ -11,31 +11,29 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "bookings")
 @Data
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Change to EAGER for testing
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Change to EAGER for testing
     @JoinColumn(name = "car_id")
     private Car car;
 
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private BookingStatus status;
     private BigDecimal totalPrice;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    public void setPaymentId(String paymentIntentId) {
-
-    }
+    private String paymentId;
 }
