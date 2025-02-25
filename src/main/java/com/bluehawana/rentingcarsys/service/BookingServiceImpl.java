@@ -39,7 +39,15 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDTO updateBooking(Long id, Booking updatedBooking) {
-        return null;
+        return bookingRepository.findById(id)
+                .map(booking -> {
+                    booking.setStartTime(updatedBooking.getStartTime());
+                    booking.setEndTime(updatedBooking.getEndTime());
+                    booking.setTotalPrice(updatedBooking.getTotalPrice());
+                    booking.setUpdatedAt(LocalDateTime.now());
+                    return mapToBookingResponseDTO(bookingRepository.save(booking));
+                })
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
     }
 
     @Override
@@ -75,8 +83,8 @@ public class BookingServiceImpl implements BookingService {
                 .id(booking.getId())
                 .userId(booking.getUser().getId())
                 .carId(booking.getCar().getId())
-                .startDate(booking.getStartTime())
-                .endDate(booking.getEndTime())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
                 .status(booking.getStatus())
                 .totalPrice(booking.getTotalPrice())
                 .createdAt(booking.getCreatedAt())

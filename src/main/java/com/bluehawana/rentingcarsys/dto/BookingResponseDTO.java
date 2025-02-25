@@ -17,8 +17,8 @@ public class BookingResponseDTO {
     private Long id;
     private Long userId;
     private Long carId;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private BookingStatus status;
     private BigDecimal totalPrice;
     private LocalDateTime createdAt;

@@ -18,11 +18,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByUser(User user);
     List<Booking> findByCar_IdAndStatus(Long carId, BookingStatus status);
 
-    // Add some useful queries
-    @Query("SELECT b FROM Booking b WHERE b.car.id = :carId AND b.startTime <= :endDate AND b.endTime >= :startDate")
+    @Query("SELECT b FROM Booking b WHERE b.car.id = :carId AND b.startTime <= :endTime AND b.endTime >= :startTime")
     List<Booking> findOverlappingBookings(@Param("carId") Long carId,
-                                          @Param("startDate") LocalDateTime startDate,
-                                          @Param("endDate") LocalDateTime endDate);
+                                          @Param("startTime") LocalDateTime startTime,
+                                          @Param("endTime") LocalDateTime endTime);
 
     List<Booking> findByStatusAndUser(BookingStatus status, User user);
 
