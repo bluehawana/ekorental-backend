@@ -30,7 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingController {
 
-    private static final Logger log = LoggerFactory.getLogger(BookingController.class);
+    static final Logger log = LoggerFactory.getLogger(BookingController.class);
 
     private final BookingService bookingService;
     private final CarService carService;

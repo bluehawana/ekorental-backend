@@ -218,7 +218,7 @@ public class BookingServiceImpl implements BookingService {
         } catch (Exception e) {
             booking.setStatus(BookingStatus.PAYMENT_FAILED);
             bookingRepository.save(booking);
-            throw new PaymentException("Payment processing failed: " + e.getMessage());
+            throw new PaymentException("Payment processing failed: " + e.getMessage(), e);
         }
     }
 
