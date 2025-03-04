@@ -32,5 +32,9 @@ public class Car {
         return hourRate.multiply(BigDecimal.valueOf(24));
     }
 
+    public String getMake() {
+        return model.split(" ")[0];
+    }
+
     // Add any other fields you have
 }

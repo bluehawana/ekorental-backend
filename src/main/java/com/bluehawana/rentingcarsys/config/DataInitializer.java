@@ -120,7 +120,7 @@ public class DataInitializer {
                     Booking booking1 = new Booking();
                     booking1.setUser(savedUser);
                     booking1.setCar(firstCar);
-                    booking1.setStatus(BookingStatus.PENDING);
+                    booking1.setStatus(String.valueOf(BookingStatus.PENDING));
                     booking1.setStartTime(LocalDateTime.now().plusDays(1));
                     booking1.setEndTime(LocalDateTime.now().plusDays(2));
                     booking1.setTotalPrice(new BigDecimal("110.00"));

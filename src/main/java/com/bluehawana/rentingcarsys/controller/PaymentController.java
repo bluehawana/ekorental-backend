@@ -1,56 +1,42 @@
 package com.bluehawana.rentingcarsys.controller;
 
-import com.bluehawana.rentingcarsys.dto.BookingDTO;
-import com.bluehawana.rentingcarsys.exception.ErrorResponse;
-import com.bluehawana.rentingcarsys.service.BookingService;
-import com.bluehawana.rentingcarsys.service.StripeService;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import com.bluehawana.rentingcarsys.dto.PaymentDTO;
+import com.bluehawana.rentingcarsys.exception.PaymentException;
+import com.bluehawana.rentingcarsys.service.PaymentService;
+import com.stripe.exception.StripeException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-
-import static com.bluehawana.rentingcarsys.controller.BookingController.log;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api")
-@RequiredArgsConstructor
+@RequestMapping("/api/payments")
+@CrossOrigin(origins = "http://localhost:3000")
 public class PaymentController {
 
-    private final StripeService stripeService;
-    private final BookingService bookingService;
-    @PostMapping("/create-checkout-session")
-    public ResponseEntity<?> createCheckoutSession(@RequestBody BookingDTO bookingDTO) {
-        try {
-            // Create Stripe session
-            String sessionId = stripeService.createCheckoutSession(
-                    bookingDTO.getCarId(),
-                    bookingDTO.getTotalPrice(),
-                    bookingDTO.getStartTime(),
-                    bookingDTO.getEndTime()
-            );
+    @Autowired
+    private PaymentService paymentService;
 
-            return ResponseEntity.ok(Collections.singletonMap("sessionId", sessionId));
-        } catch (Exception e) {
-            log.error("Error creating checkout session: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Failed to create checkout session"));
+    @GetMapping("/history")
+    public ResponseEntity<List<PaymentDTO>> getPaymentHistory() {
+        try {
+            List<PaymentDTO> paymentHistory = paymentService.getPaymentHistory();
+            return ResponseEntity.ok(paymentHistory);
+        } catch (PaymentException | StripeException e) {
+            return ResponseEntity.status(500).body(null);
         }
     }
 
-    @PostMapping("/webhook")
-    public ResponseEntity<?> handleStripeWebhook(@RequestBody String payload,
-                                                 @RequestHeader("Stripe-Signature") String sigHeader) {
+    @GetMapping
+    public ResponseEntity<List<PaymentDTO>> getAllPayments() {
         try {
-            stripeService.handleWebhookEvent(payload, sigHeader);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Error handling webhook: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Webhook processing failed"));
+            List<PaymentDTO> payments = paymentService.getPaymentHistory();
+            return ResponseEntity.ok(payments);
+        } catch (PaymentException e) {
+            return ResponseEntity.status(500).body(null);
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
         }
     }
 }

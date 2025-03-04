@@ -1,168 +1,109 @@
 package com.bluehawana.rentingcarsys.service;
 
-import com.bluehawana.rentingcarsys.exception.ResourceNotFoundException;
-import com.bluehawana.rentingcarsys.model.Booking;
-import com.bluehawana.rentingcarsys.repository.BookingRepository;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import com.mailjet.client.ClientOptions;
+import com.mailjet.client.MailjetClient;
+import com.mailjet.client.MailjetRequest;
+import com.mailjet.client.MailjetResponse;
+import com.mailjet.client.errors.MailjetException;
+import com.mailjet.client.resource.Emailv31;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.format.DateTimeFormatter;
-
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class NotificationService {
-    private final JavaMailSender emailSender;
-    private final BookingRepository bookingRepository;
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
-    // Email templates remain the same...
-    private static final String PAYMENT_CONFIRMATION_TEMPLATE = """
-        Dear %s,
-        
-        Payment confirmed for booking #%d
-        Amount: $%.2f
-        Date: %s
-        
-        Thank you for your payment!
-        
-        Best regards,
-        Your Car Rental Team
-        """;
+    @Value("${mailjet.api.key}")
+    private String apiKey;
 
-    private static final String BOOKING_CONFIRMATION_TEMPLATE = """
-        Dear %s,
-        
-        Your booking has been confirmed!
-        
-        Booking Details:
-        - Booking ID: %d
-        - Car: %s
-        - Start Date: %s
-        - End Date: %s
-        - Total Price: $%.2f
-        
-        Thank you for choosing our service!
-        
-        Best regards,
-        Your Car Rental Team
-        """;
+    @Value("${mailjet.api.secret}")
+    private String apiSecret;
 
-    private static final String BOOKING_CANCELLATION_TEMPLATE = """
-        Dear %s,
-        
-        Your booking #%d has been cancelled.
-        
-        If you have any questions, please contact our support team.
-        
-        Best regards,
-        Your Car Rental Team
-        """;
+    @Value("${mailjet.sender.email}")
+    private String senderEmail;
 
-    private static final String BOOKING_COMPLETION_TEMPLATE = """
-        Dear %s,
-        
-        Your booking #%d has been completed.
-        We hope you enjoyed our service!
-        
-        Best regards,
-        Your Car Rental Team
-        """;
+    @Value("${mailjet.sender.name}")
+    private String senderName;
 
-    public void sendBookingConfirmation(Booking booking) {
+    // This is the missing method that your code is trying to call
+    public void sendEmail(String to, String toName, String subject, String textContent, String htmlContent) {
         try {
-            String emailContent = createBookingConfirmationMessage(booking);
-            sendEmail(booking.getUser().getEmail(), "Booking Confirmation - #" + booking.getId(), emailContent);
-            log.info("Confirmation email sent for booking: {}", booking.getId());
+            MailjetClient client = new MailjetClient(apiKey, apiSecret);
+            MailjetRequest request = new MailjetRequest(Emailv31.resource)
+                    .property(Emailv31.MESSAGES, new JSONArray()
+                            .put(new JSONObject()
+                                    .put(Emailv31.Message.FROM, new JSONObject()
+                                            .put("Email", senderEmail)
+                                            .put("Name", senderName))
+                                    .put(Emailv31.Message.TO, new JSONArray()
+                                            .put(new JSONObject()
+                                                    .put("Email", to)
+                                                    .put("Name", toName)))
+                                    .put(Emailv31.Message.SUBJECT, subject)
+                                    .put(Emailv31.Message.TEXTPART, textContent)
+                                    .put(Emailv31.Message.HTMLPART, htmlContent)));
+
+            MailjetResponse response = client.post(request);
+
+            if (response.getStatus() != 200) {
+                log.error("Failed to send email, status code: {}", response.getStatus());
+                throw new RuntimeException("Failed to send email: " + response.getData());
+            }
+
+            log.info("Email sent successfully to {}", to);
+        } catch (MailjetException e) {
+            log.error("Mailjet error sending email to {}: {}", to, e.getMessage());
+            throw new RuntimeException("Failed to send email due to Mailjet error", e);
         } catch (Exception e) {
-            log.error("Failed to send confirmation email for booking: {}", booking.getId(), e);
-        }
-    }
-
-    public void sendPaymentConfirmation(Long bookingId) {
-        try {
-            Booking booking = bookingRepository.findById(bookingId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-            String emailContent = createPaymentConfirmationMessage(booking);
-            sendEmail(booking.getUser().getEmail(), "Payment Confirmation", emailContent);
-            log.info("Payment confirmation email sent for booking: {}", bookingId);
-        } catch (Exception e) {
-            log.error("Failed to send payment confirmation email for booking: {}", bookingId, e);
-        }
-    }
-
-    public void sendBookingCancellation(Booking booking) {
-        try {
-            String emailContent = createBookingCancellationMessage(booking);
-            sendEmail(booking.getUser().getEmail(), "Booking Cancellation", emailContent);
-            log.info("Cancellation email sent for booking: {}", booking.getId());
-        } catch (Exception e) {
-            log.error("Failed to send cancellation email for booking: {}", booking.getId(), e);
-        }
-    }
-
-    public void sendBookingCompletionConfirmation(Booking booking) {
-        try {
-            String emailContent = createBookingCompletionMessage(booking);
-            sendEmail(booking.getUser().getEmail(), "Booking Completed", emailContent);
-            log.info("Completion email sent for booking: {}", booking.getId());
-        } catch (Exception e) {
-            log.error("Failed to send completion email for booking: {}", booking.getId(), e);
-        }
-    }
-
-    private String createPaymentConfirmationMessage(Booking booking) {
-        return String.format(PAYMENT_CONFIRMATION_TEMPLATE,
-                booking.getUser().getName(),
-                booking.getId(),
-                booking.getTotalPrice(),
-                booking.getUpdatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE)
-        );
-    }
-
-    private String createBookingConfirmationMessage(Booking booking) {
-        return String.format(BOOKING_CONFIRMATION_TEMPLATE,
-                booking.getUser().getName(),
-                booking.getId(),
-                booking.getCar().getModel(),
-                booking.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                booking.getEndTime().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                booking.getTotalPrice()
-        );
-    }
-
-    private String createBookingCancellationMessage(Booking booking) {
-        return String.format(BOOKING_CANCELLATION_TEMPLATE,
-                booking.getUser().getName(),
-                booking.getId()
-        );
-    }
-
-    private String createBookingCompletionMessage(Booking booking) {
-        return String.format(BOOKING_COMPLETION_TEMPLATE,
-                booking.getUser().getName(),
-                booking.getId()
-        );
-    }
-
-    private void sendEmail(String to, String subject, String content) {
-        try {
-            MimeMessage message = emailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(content, true);
-
-            emailSender.send(message);
-        } catch (MessagingException e) {
-            log.error("Failed to send email: {}", e.getMessage());
+            log.error("Unexpected error sending email to {}: {}", to, e.getMessage());
             throw new RuntimeException("Failed to send email", e);
         }
     }
+
+    // Method to send booking confirmation email
+    public void sendBookingConfirmation(String customerEmail, String customerName, Long bookingId,
+                                        String startDate, String endDate, String totalPrice,
+                                        String carModel) {
+        String subject = "Booking Confirmation #" + bookingId;
+
+        String textContent = "Dear " + customerName + ",\n\n" +
+                "Your booking has been confirmed. Thank you for choosing our service!\n\n" +
+                "Booking details:\n" +
+                "Booking ID: " + bookingId + "\n" +
+                "Car: " + carModel + "\n" +
+                "Start Date: " + startDate + "\n" +
+                "End Date: " + endDate + "\n" +
+                "Total Price: $" + totalPrice + "\n\n" +
+                "If you have any questions, please contact our support team.\n\n" +
+                "Best regards,\n" +
+                "Car Rental Team";
+
+        String htmlContent = "<h3>Dear " + customerName + ",</h3>" +
+                "<p>Your booking has been confirmed. Thank you for choosing our service!</p>" +
+                "<h4>Booking details:</h4>" +
+                "<ul>" +
+                "<li><strong>Booking ID:</strong> " + bookingId + "</li>" +
+                "<li><strong>Car:</strong> " + carModel + "</li>" +
+                "<li><strong>Start Date:</strong> " + startDate + "</li>" +
+                "<li><strong>End Date:</strong> " + endDate + "</li>" +
+                "<li><strong>Total Price:</strong> $" + totalPrice + "</li>" +
+                "</ul>" +
+                "<p>If you have any questions, please contact our support team.</p>" +
+                "<p>Best regards,<br>" +
+                "Car Rental Team</p>";
+
+        // This calls the sendEmail method above
+        sendEmail(customerEmail, customerName, subject, textContent, htmlContent);
+    }
+
+    public void sendPaymentConfirmation(Long bookingId) {
+
+    }
 }
+
+
+

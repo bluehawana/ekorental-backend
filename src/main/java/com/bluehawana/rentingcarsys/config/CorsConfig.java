@@ -15,13 +15,10 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Keep existing settings
-        config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setAllowCredentials(true);
 
-        // Keep existing exposed headers
         config.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
@@ -30,9 +27,8 @@ public class CorsConfig {
                 "Access-Control-Allow-Headers"
         ));
 
-        // Apply to all paths
         source.registerCorsConfiguration("/**", config);
-        source.registerCorsConfiguration("/api/**", config);  // Extra coverage for API endpoints
+        source.registerCorsConfiguration("/api/**", config);
 
         return new CorsFilter(source);
     }

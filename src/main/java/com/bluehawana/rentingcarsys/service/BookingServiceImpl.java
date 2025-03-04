@@ -2,15 +2,13 @@ package com.bluehawana.rentingcarsys.service;
 
 import com.bluehawana.rentingcarsys.dto.BookingDTO;
 import com.bluehawana.rentingcarsys.dto.BookingResponseDTO;
-import com.bluehawana.rentingcarsys.exception.BookingConfirmationException;
-import com.bluehawana.rentingcarsys.exception.CarNotAvailableException;
-import com.bluehawana.rentingcarsys.exception.PaymentException;
-import com.bluehawana.rentingcarsys.exception.ResourceNotFoundException;
-import com.bluehawana.rentingcarsys.model.*;
-import com.bluehawana.rentingcarsys.repository.BookingRepository;
-import com.bluehawana.rentingcarsys.repository.CarRepository;
-import com.bluehawana.rentingcarsys.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import com.bluehawana.rentingcarsys.model.Booking;
+import com.bluehawana.rentingcarsys.model.BookingStatus;
+import com.bluehawana.rentingcarsys.model.Car;
+import com.bluehawana.rentingcarsys.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,256 +17,155 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
-@RequiredArgsConstructor
-public class BookingServiceImpl implements BookingService {
-    private final BookingRepository bookingRepository;
-    private final UserRepository userRepository;
-    private final CarRepository carRepository;
-    private final CarService carService;
-    private final PaymentService paymentService;
-    private final NotificationService notificationService;
+public class BookingServiceImpl extends BookingService {
+
+    @Autowired
+    private CarService carService;
+
+    private static final Logger log = LoggerFactory.getLogger(BookingServiceImpl.class);
+
+    @Transactional
+    @Override
+    public BookingResponseDTO createBooking(Long userId, Long carId, BookingDTO bookingDTO) {
+        log.info("Creating booking for user {} and car {}", userId, carId);
+
+        Car car = carService.getCarById(carId);
+        if (car == null) {
+            log.error("Car with id {} not found", carId);
+            throw new IllegalArgumentException("Car not found");
+        }
+
+        Booking booking = new Booking();
+        User user = new User(); // Placeholder; ideally fetch from UserService
+        user.setId(userId);
+        booking.setUser(user);
+        booking.setCarId(carId);
+        booking.setStartTime(bookingDTO.getStartTime());
+        booking.setEndTime(bookingDTO.getEndTime());
+        booking.setTotalPrice(bookingDTO.getTotalPrice());
+        booking.setStatus(String.valueOf(BookingStatus.PENDING));
+
+        LocalDateTime now = LocalDateTime.now();
+        booking.setCreatedAt(now);
+        booking.setUpdatedAt(now);
+
+        Booking savedBooking = bookingRepository.save(booking);
+        log.info("Booking created with id: {}", savedBooking.getId());
+        return mapToBookingResponseDTO(savedBooking);
+    }
+
+    @Override
+    public BookingResponseDTO getBookingById(Long id) {
+        log.info("Fetching booking with id {}", id);
+        return mapToBookingResponseDTO(getBooking(id));
+    }
 
     @Override
     public List<BookingResponseDTO> getBookingsByUserId(Long userId) {
-        return bookingRepository.findByUser_Id(userId)
-                .stream()
+        log.info("Fetching bookings for user id {}", userId);
+        return bookingRepository.findByUserId(userId).stream()
                 .map(this::mapToBookingResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public BookingResponseDTO updateBooking(Long id, Booking updatedBooking) {
-        return bookingRepository.findById(id)
-                .map(booking -> {
-                    booking.setStartTime(updatedBooking.getStartTime());
-                    booking.setEndTime(updatedBooking.getEndTime());
-                    booking.setTotalPrice(updatedBooking.getTotalPrice());
-                    booking.setUpdatedAt(LocalDateTime.now());
-                    return mapToBookingResponseDTO(bookingRepository.save(booking));
-                })
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-    }
-
-    @Override
-    @Transactional
-    public BookingResponseDTO createBooking(Long userId, Long carId, BookingDTO bookingDTO) throws CarNotAvailableException {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new ResourceNotFoundException("Car not found"));
-
-        if (!car.isAvailable()) {
-            throw new CarNotAvailableException("Car is not available for booking");
-        }
-
-        Booking booking = new Booking();
-        booking.setUser(user);
-        booking.setCar(car);
-        booking.setStartTime(bookingDTO.getStartTime());
-        booking.setEndTime(bookingDTO.getEndTime());
-        booking.setStatus(BookingStatus.PENDING);
-        booking.setTotalPrice(bookingDTO.getTotalPrice());
-        booking.setCreatedAt(LocalDateTime.now());
+        log.info("Updating booking with id {}", id);
+        Booking booking = getBooking(id);
+        booking.setStartTime(updatedBooking.getStartTime());
+        booking.setEndTime(updatedBooking.getEndTime());
+        booking.setTotalPrice(updatedBooking.getTotalPrice());
+        booking.setStatus(updatedBooking.getStatus());
         booking.setUpdatedAt(LocalDateTime.now());
-
-        Booking savedBooking = bookingRepository.save(booking);
-        return mapToBookingResponseDTO(savedBooking);
-    }
-
-    @Override
-    public BookingResponseDTO mapToBookingResponseDTO(Booking booking) {
-        return BookingResponseDTO.builder()
-                .id(booking.getId())
-                .userId(booking.getUser().getId())
-                .carId(booking.getCar().getId())
-                .startTime(booking.getStartTime())
-                .endTime(booking.getEndTime())
-                .status(booking.getStatus())
-                .totalPrice(booking.getTotalPrice())
-                .createdAt(booking.getCreatedAt())
-                .updatedAt(booking.getUpdatedAt())
-                .build();
-    }
-
-    @Override
-    public List<BookingResponseDTO> getAllBookings() {
-        return bookingRepository.findAll()
-                .stream()
-                .map(this::mapToBookingResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<BookingResponseDTO> getAllBookingsByUser() {
-        // This method can be removed or implemented based on your needs
-        throw new UnsupportedOperationException("Method not implemented");
-    }
-
-    @Override
-    public List<BookingResponseDTO> getBookingsByUser(User user) {
-        return bookingRepository.findByUser(user)
-                .stream()
-                .map(this::mapToBookingResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public BookingResponseDTO getBookingById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Booking ID cannot be null");
-        }
-        return bookingRepository.findById(id)
-                .map(this::mapToBookingResponseDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-    }
-
-    @Override
-    public void deleteBooking(Long id) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        bookingRepository.delete(booking);
-    }
-
-    @Override
-    public BookingResponseDTO updateBooking(Long id, BookingDTO bookingDTO) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        booking.setStartTime(bookingDTO.getStartDate());
-        booking.setEndTime(bookingDTO.getEndDate());
-        booking.setUpdatedAt(LocalDateTime.now());
-
         return mapToBookingResponseDTO(bookingRepository.save(booking));
     }
 
     @Override
-    public void updateBookingStatus(Long id, BookingStatus status) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+    public Booking updateBookingStatus(Long id, BookingStatus status) {
+        log.info("Updating booking {} status to {}", id, status);
+        Booking booking = getBooking(id);
+        booking.setStatus(String.valueOf(status));
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
 
-        validateStatusTransition(booking.getStatus(), status);  // Actually use the method
-
-        booking.setStatus(status);
+    @Transactional
+    @Override
+    public void confirmBooking(Long id) {
+        log.info("Confirming booking with id {}", id);
+        Booking booking = getBooking(id);
+        if (!BookingStatus.PENDING.equals(booking.getStatus())) {
+            log.warn("Booking {} cannot be confirmed; current status is {}", id, booking.getStatus());
+            throw new IllegalStateException("Booking must be PENDING to confirm");
+        }
+        booking.setStatus(String.valueOf(BookingStatus.CONFIRMED));
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
-
-        handleStatusSpecificActions(booking, status);
-    }
-
-    private void handleStatusSpecificActions(Booking booking, BookingStatus status) {
-        switch (status) {
-            case CONFIRMED -> {
-                carService.updateCarAvailability(booking.getCar().getId(), false);
-                notificationService.sendBookingConfirmation(booking);
-            }
-            case CANCELLED -> {
-                carService.updateCarAvailability(booking.getCar().getId(), true);
-                notificationService.sendBookingCancellation(booking);
-            }
-            case COMPLETED -> notificationService.sendBookingCompletionConfirmation(booking);
-        }
+        log.info("Booking {} confirmed", id);
     }
 
     @Override
-    @Transactional
-    public void confirmBooking(Long id) {
-        try {
-            Booking booking = bookingRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-            if (!isCarAvailableForDates(booking.getCar().getId(),
-                    booking.getStartTime(),
-                    booking.getEndTime())) {
-                throw new CarNotAvailableException("Car is no longer available for these dates");
-            }
-
-            booking.setStatus(BookingStatus.CONFIRMED);
-            booking.setUpdatedAt(LocalDateTime.now());
-            booking = bookingRepository.save(booking);
-
-            carService.updateCarAvailability(booking.getCar().getId(), false);
-            notificationService.sendBookingConfirmation(booking);
-
-        } catch (CarNotAvailableException | ResourceNotFoundException e) {
-            // Re-throw these exceptions directly
-            throw e;
-        } catch (Exception e) {
-            // Create new exception with only message
-            throw new BookingConfirmationException("Failed to confirm booking: " + e.getMessage());
-        }
+    public void processPayment(Long bookingId, String paymentIntentId) {
+        log.info("Processing payment for booking {} with paymentIntentId {}", bookingId, paymentIntentId);
+        confirmBooking(bookingId);
     }
 
     @Override
-    public void processPayment(Long bookingId, String paymentIntentId) throws PaymentException {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        try {
-            paymentService.confirmPayment(paymentIntentId);
-
-            booking.setStatus(BookingStatus.PAID);
-            booking.setPaymentId(paymentIntentId);
-            booking.setUpdatedAt(LocalDateTime.now());
-            Booking savedBooking = bookingRepository.save(booking);
-
-            // Changed from booking.getId() to savedBooking.getId()
-            notificationService.sendPaymentConfirmation(savedBooking.getId());
-        } catch (Exception e) {
-            booking.setStatus(BookingStatus.PAYMENT_FAILED);
-            bookingRepository.save(booking);
-            throw new PaymentException("Payment processing failed: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void sendBookingConfirmation(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        notificationService.sendBookingConfirmation(booking);
+    public void cancelBooking(Long id) {
+        log.info("Cancelling booking with id {}", id);
+        Booking booking = getBooking(id);
+        booking.setStatus(String.valueOf(BookingStatus.CANCELLED));
+        booking.setUpdatedAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+        log.info("Booking {} cancelled", id);
     }
 
     @Override
     public boolean isCarAvailableForDates(Long carId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<Booking> bookings = bookingRepository.findByCar_IdAndStatus(carId, BookingStatus.CONFIRMED);
-        for (Booking booking : bookings) {
-            if (startDate.isBefore(booking.getEndTime()) && endDate.isAfter(booking.getStartTime())) {
-                return false;
-            }
-        }
-        return true;
+        log.info("Checking availability for car {} from {} to {}", carId, startDate, endDate);
+        return true; // Unlimited cars, always available
     }
 
     @Override
-    public void cancelBooking(Long id) throws PaymentException {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking.setUpdatedAt(LocalDateTime.now());
-        bookingRepository.save(booking);
-
-        carService.updateCarAvailability(booking.getCar().getId(), true);
-        notificationService.sendBookingCancellation(booking);
+    public void sendBookingConfirmation(Long bookingId) {
+        log.info("Sending confirmation for booking {}", bookingId);
+        // No-op for simplicity
     }
 
-    public List<BookingResponseDTO> findBookingsByUserAndProvider(String email, ProviderType provider) {
-        User user = userRepository.findByEmailAndProvider(email, String.valueOf(provider))
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    @Transactional
+    @Override
+    public BookingDTO saveBooking(BookingDTO bookingDTO) {
+        log.info("Saving booking: {}", bookingDTO);
+        Booking booking = bookingDTO.toEntity();
+        if (booking.getStatus() == null) {
+            booking.setStatus(String.valueOf(BookingStatus.PENDING));
+        }
+        if (booking.getCreatedAt() == null) {
+            booking.setCreatedAt(LocalDateTime.now());
+        }
+        booking.setUpdatedAt(LocalDateTime.now());
+        Booking savedBooking = bookingRepository.save(booking);
+        log.info("Booking saved with id: {}", savedBooking.getId());
+        return BookingDTO.fromEntity(savedBooking);
+    }
 
-        return bookingRepository.findByUser(user)
-                .stream()
+    @Override
+    public List<BookingResponseDTO> getAllBookingsByUser() {
+        log.info("Fetching all bookings for current user");
+        return getAllBookings(); // Simple for homework
+    }
+
+    @Override
+    public List<BookingResponseDTO> getBookingsByUser(User user) {
+        log.info("Fetching bookings for user with id {}", user.getId());
+        return bookingRepository.findByUserId(user.getId()).stream()
                 .map(this::mapToBookingResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    private void validateStatusTransition(BookingStatus currentStatus, BookingStatus newStatus) {
-        if (currentStatus == BookingStatus.CANCELLED && newStatus != BookingStatus.CANCELLED) {
-            throw new IllegalStateException("Cannot change status of a cancelled booking");
-        }
-        if (currentStatus == BookingStatus.COMPLETED && newStatus != BookingStatus.COMPLETED) {
-            throw new IllegalStateException("Cannot change status of a completed booking");
-        }
+    @Override
+    public Booking updateBookingStatusAfterPayment(Long id) {
+        log.info("Updating booking status after payment for id {}", id);
+        return updateBookingStatus(id, BookingStatus.CONFIRMED);
     }
 }

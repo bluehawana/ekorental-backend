@@ -2,38 +2,63 @@ package com.bluehawana.rentingcarsys.model;
 
 import com.bluehawana.rentingcarsys.dto.UserDTO;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "bookings")
 @Data
-@NoArgsConstructor
+@Table(name = "bookings")
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)  // Change to EAGER for testing
-    @JoinColumn(name = "user_id")
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)  // Change to EAGER for testing
-    @JoinColumn(name = "car_id")
-    private Car car;
-
-    @Enumerated(EnumType.STRING)
-    private BookingStatus status;
-
+    private Long carId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private String status;
     private BigDecimal totalPrice;
+    private Integer totalHours;
+
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
-    private String paymentId;
+
+    @Transient
+    private String carModel;
+
+    @Transient
+    private String carImage;
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public UserDTO getCar() {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(this.carId);
+        userDTO.setEmail(this.carModel);
+        userDTO.setName(this.carImage);
+        return userDTO;
+    }
+
+    public void setCar(Car firstCar) {
+        this.carId = firstCar.getId();
+        this.carModel = firstCar.getModel();
+        this.carImage = firstCar.getImageUrl();
+    }
 }
